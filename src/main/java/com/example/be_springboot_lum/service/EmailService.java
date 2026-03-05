@@ -29,7 +29,7 @@ public class EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("[LŨM] Đặt lại mật khẩu");
+            helper.setSubject("[LỤM.vn] Đặt lại mật khẩu");
 
             String resetLink = frontendUrl + "/dat-lai-mat-khau?token=" + token;
             String html = buildPasswordResetEmailHtml(fullName, resetLink);
@@ -50,7 +50,7 @@ public class EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("[LŨM] Chào mừng bạn đến với LŨM!");
+            helper.setSubject("[LỤM] Chào mừng bạn đến với LỤM!");
 
             String html = buildWelcomeEmailHtml(fullName);
             helper.setText(html, true);
@@ -66,8 +66,8 @@ public class EmailService {
                 <!DOCTYPE html>
                 <html>
                 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                  <div style="background:#1a1a1a; padding:20px; text-align:center;">
-                    <h1 style="color:#FFBA00; margin:0;">LŨM</h1>
+                  <div style="background:#059669; padding:20px; text-align:center;">
+                    <h1 style="color:#FFBA00; margin:0;">LỤM.vn</h1>
                   </div>
                   <div style="padding:32px 24px;">
                     <h2>Xin chào %s,</h2>
@@ -75,7 +75,7 @@ public class EmailService {
                     <p>Nhấn vào nút bên dưới để đặt lại mật khẩu. Link này sẽ hết hạn sau <strong>30 phút</strong>.</p>
                     <div style="text-align:center; margin: 32px 0;">
                       <a href="%s"
-                         style="background:#1a1a1a; color:#FFBA00; padding:14px 28px;
+                         style="background:#059669; color:#FFBA00; padding:14px 28px;
                                 text-decoration:none; border-radius:8px; font-weight:bold; font-size:16px;">
                         Đặt lại mật khẩu
                       </a>
@@ -86,7 +86,7 @@ public class EmailService {
                     <p style="color:#888; font-size:13px;">Hoặc copy link sau vào trình duyệt:<br>%s</p>
                   </div>
                   <div style="background:#f5f5f5; padding:16px; text-align:center; font-size:12px; color:#888;">
-                    © 2025 LŨM - Sàn giao dịch đồ cũ sinh viên
+                    © 2025 LỤM.vn - Sàn giao dịch đồ cũ sinh viên
                   </div>
                 </body>
                 </html>
@@ -98,16 +98,16 @@ public class EmailService {
                 <!DOCTYPE html>
                 <html>
                 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                  <div style="background:#1a1a1a; padding:20px; text-align:center;">
-                    <h1 style="color:#FFBA00; margin:0;">LŨM</h1>
+                  <div style="background:#059669; padding:20px; text-align:center;">
+                    <h1 style="color:#FFBA00; margin:0;">LỤM.vn</h1>
                   </div>
                   <div style="padding:32px 24px;">
                     <h2>Chào mừng %s!</h2>
-                    <p>Cảm ơn bạn đã đăng ký tài khoản tại LŨM - sàn giao dịch đồ cũ dành cho sinh viên.</p>
+                    <p>Cảm ơn bạn đã đăng ký tài khoản tại LỤM.vn - sàn giao dịch đồ cũ dành cho sinh viên.</p>
                     <p>Bạn có thể bắt đầu mua bán, trao đổi đồ cũ với cộng đồng sinh viên ngay bây giờ!</p>
                   </div>
                   <div style="background:#f5f5f5; padding:16px; text-align:center; font-size:12px; color:#888;">
-                    © 2025 LŨM - Sàn giao dịch đồ cũ sinh viên
+                    © 2025 LỤM.vn - Sàn giao dịch đồ cũ sinh viên
                   </div>
                 </body>
                 </html>
