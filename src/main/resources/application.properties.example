@@ -1,0 +1,48 @@
+# ===================================================================
+# LŨM - SPRING BOOT CONFIGURATION EXAMPLE
+# ===================================================================
+
+# Server config
+server.port=8686
+api.prefix=/api/v1
+
+# PostgreSQL Configuration
+# Change 'localhost:5432/lum_db' to your database host and name
+spring.datasource.url=jdbc:postgresql://localhost:5432/lum_db
+spring.datasource.username=postgres
+spring.datasource.password=your_db_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA / Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# JWT Security
+# Generate a secure random Base64 string for jwt.secret (at least 256-bit)
+jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+# 1 day = 86400000 ms
+jwt.access-token-expiration=86400000
+# 7 days = 604800000 ms
+jwt.refresh-token-expiration=604800000
+
+# Mail Service (Gmail SMTP Example)
+# To use Gmail, you must enable 2FA and create an 'App Password'
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-email@gmail.com
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# Frontend URL (Used for Password Reset links and CORS)
+app.frontend-url=http://localhost:3000
+
+# Async Thread Pool Configuration
+spring.task.execution.pool.core-size=5
+spring.task.execution.pool.max-size=20
+spring.task.execution.pool.queue-capacity=100
+
+# File Storage (Optional - if using local storage)
+# upload.path=uploads/
