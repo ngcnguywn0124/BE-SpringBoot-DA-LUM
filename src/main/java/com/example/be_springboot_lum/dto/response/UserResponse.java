@@ -20,6 +20,7 @@ public class UserResponse {
     private String coverUrl;
     /** Tập hợp các role của user, ví dụ: ["ROLE_USER", "ROLE_ADMIN"] */
     private Set<String> roles;
+    private boolean isSocialAccount;
     private String studentId;
     private Integer universityId;
     private Integer campusId;

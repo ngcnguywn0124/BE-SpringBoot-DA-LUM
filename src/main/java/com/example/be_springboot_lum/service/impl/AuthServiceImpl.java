@@ -225,6 +225,11 @@ public class AuthServiceImpl implements AuthService {
 
         User user = securityUtils.getCurrentUser();
 
+        // Chặn đổi mật khẩu nếu là tài khoản Google/Social
+        if (oAuthAccountRepository.existsByUserUserId(user.getUserId())) {
+            throw new AppException(ErrorCode.SOCIAL_ACCOUNT_PASSWORD_RESET_NOT_ALLOWED);
+        }
+
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.CURRENT_PASSWORD_INCORRECT);
         }
@@ -282,6 +287,8 @@ public class AuthServiceImpl implements AuthService {
                 .map(Role::getName)
                 .collect(Collectors.toSet());
 
+        boolean isSocialAccount = oAuthAccountRepository.existsByUserUserId(user.getUserId());
+
         return UserResponse.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
@@ -290,6 +297,7 @@ public class AuthServiceImpl implements AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .coverUrl(user.getCoverUrl())
                 .roles(roleNames)
+                .isSocialAccount(isSocialAccount)
                 .studentId(user.getStudentId())
                 .universityId(user.getUniversityId())
                 .campusId(user.getCampusId())
