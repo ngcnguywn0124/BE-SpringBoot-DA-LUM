@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +15,7 @@ import lombok.*;
 public class CampusRequest {
 
     @NotNull(message = "ID trường đại học không được để trống")
-    private Integer universityId;
+    private UUID universityId;
 
     @NotBlank(message = "Tên cơ sở không được để trống")
     @Size(max = 255, message = "Tên cơ sở không được vượt quá 255 ký tự")

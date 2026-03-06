@@ -9,11 +9,13 @@ import com.example.be_springboot_lum.model.University;
 import com.example.be_springboot_lum.repository.CampusRepository;
 import com.example.be_springboot_lum.repository.UniversityRepository;
 import com.example.be_springboot_lum.service.CampusService;
+import com.example.be_springboot_lum.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +27,7 @@ public class CampusServiceImpl implements CampusService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CampusResponse> getCampusesByUniversity(Integer universityId) {
+    public List<CampusResponse> getCampusesByUniversity(UUID universityId) {
         if (!universityRepository.existsById(universityId)) {
             throw new AppException(ErrorCode.UNIVERSITY_NOT_FOUND);
         }
@@ -35,7 +37,7 @@ public class CampusServiceImpl implements CampusService {
 
     @Override
     @Transactional(readOnly = true)
-    public CampusResponse getCampusById(Integer id) {
+    public CampusResponse getCampusById(UUID id) {
         Campus campus = campusRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CAMPUS_NOT_FOUND));
         return toResponse(campus);
@@ -52,9 +54,11 @@ public class CampusServiceImpl implements CampusService {
             throw new AppException(ErrorCode.CAMPUS_ALREADY_EXISTS);
         }
 
+        String slug = SlugUtils.toSlug(request.getCampusName());
         Campus campus = Campus.builder()
                 .university(university)
                 .campusName(request.getCampusName())
+                .slug(slug)
                 .address(request.getAddress())
                 .build();
 
@@ -63,7 +67,7 @@ public class CampusServiceImpl implements CampusService {
 
     @Override
     @Transactional
-    public CampusResponse updateCampus(Integer id, CampusRequest request) {
+    public CampusResponse updateCampus(UUID id, CampusRequest request) {
         Campus campus = campusRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CAMPUS_NOT_FOUND));
 
@@ -79,6 +83,7 @@ public class CampusServiceImpl implements CampusService {
 
         campus.setUniversity(university);
         campus.setCampusName(request.getCampusName());
+        campus.setSlug(SlugUtils.toSlug(request.getCampusName()));
         campus.setAddress(request.getAddress());
 
         return toResponse(campusRepository.save(campus));
@@ -86,7 +91,7 @@ public class CampusServiceImpl implements CampusService {
 
     @Override
     @Transactional
-    public void deleteCampus(Integer id) {
+    public void deleteCampus(UUID id) {
         Campus campus = campusRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CAMPUS_NOT_FOUND));
         campusRepository.delete(campus);
@@ -100,6 +105,7 @@ public class CampusServiceImpl implements CampusService {
                 .universityId(c.getUniversity().getUniversityId())
                 .universityName(c.getUniversity().getUniversityName())
                 .campusName(c.getCampusName())
+                .slug(c.getSlug())
                 .address(c.getAddress())
                 .createdAt(c.getCreatedAt())
                 .build();

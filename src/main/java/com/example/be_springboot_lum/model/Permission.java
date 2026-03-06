@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(
@@ -20,12 +21,16 @@ import java.time.LocalDateTime;
 public class Permission {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     /** Tên permission, ví dụ: USER_READ, USER_WRITE, USER_DELETE */
     @Column(name = "name", unique = true, nullable = false, length = 100)
     private String name;
+
+    @Column(name = "slug", unique = true, length = 150)
+    private String slug;
 
     @Column(name = "description", length = 255)
     private String description;

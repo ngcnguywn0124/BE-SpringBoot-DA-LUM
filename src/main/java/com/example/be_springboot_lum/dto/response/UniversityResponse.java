@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,9 +13,10 @@ import java.util.List;
 @Builder
 public class UniversityResponse {
 
-    private Integer universityId;
+    private UUID universityId;
     private String universityName;
     private String shortName;
+    private String slug;
     private String city;
     private String address;
     private OffsetDateTime createdAt;

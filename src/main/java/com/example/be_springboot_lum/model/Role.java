@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
@@ -25,11 +26,15 @@ public class Role {
     public static final String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(name = "name", unique = true, nullable = false, length = 50)
     private String name;
+
+    @Column(name = "slug", unique = true, length = 100)
+    private String slug;
 
     @Column(name = "description", length = 255)
     private String description;

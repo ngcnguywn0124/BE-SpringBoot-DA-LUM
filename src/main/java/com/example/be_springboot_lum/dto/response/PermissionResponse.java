@@ -3,6 +3,7 @@ package com.example.be_springboot_lum.dto.response;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PermissionResponse {
 
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private String resource;

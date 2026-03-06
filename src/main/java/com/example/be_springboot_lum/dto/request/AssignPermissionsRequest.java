@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,5 +14,5 @@ import java.util.List;
 public class AssignPermissionsRequest {
 
     @NotNull(message = "Danh sách permission không được để trống")
-    private List<Long> permissionIds;
+    private List<UUID> permissionIds;
 }

@@ -6,11 +6,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface UniversityRepository extends JpaRepository<University, Integer> {
+public interface UniversityRepository extends JpaRepository<University, UUID> {
 
     boolean existsByUniversityName(String universityName);
+
+    Optional<University> findBySlug(String slug);
 
     List<University> findByCityContainingIgnoreCase(String city);
 

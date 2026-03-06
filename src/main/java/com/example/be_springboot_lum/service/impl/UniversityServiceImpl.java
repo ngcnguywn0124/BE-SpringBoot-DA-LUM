@@ -8,12 +8,14 @@ import com.example.be_springboot_lum.exception.ErrorCode;
 import com.example.be_springboot_lum.model.University;
 import com.example.be_springboot_lum.repository.UniversityRepository;
 import com.example.be_springboot_lum.service.UniversityService;
+import com.example.be_springboot_lum.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +39,7 @@ public class UniversityServiceImpl implements UniversityService {
 
     @Override
     @Transactional(readOnly = true)
-    public UniversityResponse getUniversityById(Integer id) {
+    public UniversityResponse getUniversityById(UUID id) {
         University university = universityRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.UNIVERSITY_NOT_FOUND));
         return toResponse(university);
@@ -49,9 +51,11 @@ public class UniversityServiceImpl implements UniversityService {
         if (universityRepository.existsByUniversityName(request.getUniversityName())) {
             throw new AppException(ErrorCode.UNIVERSITY_ALREADY_EXISTS);
         }
+        String slug = SlugUtils.toSlug(request.getUniversityName());
         University university = University.builder()
                 .universityName(request.getUniversityName())
                 .shortName(request.getShortName())
+                .slug(slug)
                 .city(request.getCity())
                 .address(request.getAddress())
                 .build();
@@ -60,7 +64,7 @@ public class UniversityServiceImpl implements UniversityService {
 
     @Override
     @Transactional
-    public UniversityResponse updateUniversity(Integer id, UniversityRequest request) {
+    public UniversityResponse updateUniversity(UUID id, UniversityRequest request) {
         University university = universityRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.UNIVERSITY_NOT_FOUND));
 
@@ -72,6 +76,7 @@ public class UniversityServiceImpl implements UniversityService {
 
         university.setUniversityName(request.getUniversityName());
         university.setShortName(request.getShortName());
+        university.setSlug(SlugUtils.toSlug(request.getUniversityName()));
         university.setCity(request.getCity());
         university.setAddress(request.getAddress());
 
@@ -80,7 +85,7 @@ public class UniversityServiceImpl implements UniversityService {
 
     @Override
     @Transactional
-    public void deleteUniversity(Integer id) {
+    public void deleteUniversity(UUID id) {
         University university = universityRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.UNIVERSITY_NOT_FOUND));
         universityRepository.delete(university);
@@ -95,6 +100,7 @@ public class UniversityServiceImpl implements UniversityService {
                         .universityId(u.getUniversityId())
                         .universityName(u.getUniversityName())
                         .campusName(c.getCampusName())
+                        .slug(c.getSlug())
                         .address(c.getAddress())
                         .createdAt(c.getCreatedAt())
                         .build()).collect(Collectors.toList());
@@ -103,6 +109,7 @@ public class UniversityServiceImpl implements UniversityService {
                 .universityId(u.getUniversityId())
                 .universityName(u.getUniversityName())
                 .shortName(u.getShortName())
+                .slug(u.getSlug())
                 .city(u.getCity())
                 .address(u.getAddress())
                 .createdAt(u.getCreatedAt())

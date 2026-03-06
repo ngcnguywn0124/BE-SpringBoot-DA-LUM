@@ -4,16 +4,17 @@ import com.example.be_springboot_lum.dto.request.CampusRequest;
 import com.example.be_springboot_lum.dto.response.CampusResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CampusService {
 
-    List<CampusResponse> getCampusesByUniversity(Integer universityId);
+    List<CampusResponse> getCampusesByUniversity(UUID universityId);
 
-    CampusResponse getCampusById(Integer id);
+    CampusResponse getCampusById(UUID id);
 
     CampusResponse createCampus(CampusRequest request);
 
-    CampusResponse updateCampus(Integer id, CampusRequest request);
+    CampusResponse updateCampus(UUID id, CampusRequest request);
 
-    void deleteCampus(Integer id);
+    void deleteCampus(UUID id);
 }

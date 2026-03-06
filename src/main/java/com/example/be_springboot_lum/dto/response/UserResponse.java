@@ -22,8 +22,8 @@ public class UserResponse {
     private Set<String> roles;
     private boolean isSocialAccount;
     private String studentId;
-    private Integer universityId;
-    private Integer campusId;
+    private UUID universityId;
+    private UUID campusId;
     private String faculty;
     private String bio;
     private String location;

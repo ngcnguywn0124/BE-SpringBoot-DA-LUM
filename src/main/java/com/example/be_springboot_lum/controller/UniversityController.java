@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * University Controller
@@ -43,7 +44,7 @@ public class UniversityController {
      * Public – không cần xác thực.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UniversityResponse>> getUniversityById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<UniversityResponse>> getUniversityById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(universityService.getUniversityById(id)));
     }
 
@@ -66,7 +67,7 @@ public class UniversityController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UniversityResponse>> updateUniversity(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody UniversityRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công",
                 universityService.updateUniversity(id, request)));
@@ -78,7 +79,7 @@ public class UniversityController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteUniversity(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUniversity(@PathVariable UUID id) {
         universityService.deleteUniversity(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa trường thành công", null));
     }

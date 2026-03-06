@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +36,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public RoleResponse getRoleById(Long id) {
+    public RoleResponse getRoleById(UUID id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
         return toResponse(role);
@@ -56,7 +57,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleResponse updateRole(Long id, RoleRequest request) {
+    public RoleResponse updateRole(UUID id, RoleRequest request) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
@@ -73,7 +74,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public void deleteRole(Long id) {
+    public void deleteRole(UUID id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
         roleRepository.delete(role);
@@ -81,7 +82,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleResponse assignPermissions(Long roleId, AssignPermissionsRequest request) {
+    public RoleResponse assignPermissions(UUID roleId, AssignPermissionsRequest request) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
@@ -96,11 +97,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleResponse revokePermissions(Long roleId, AssignPermissionsRequest request) {
+    public RoleResponse revokePermissions(UUID roleId, AssignPermissionsRequest request) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
-        Set<Long> idsToRevoke = new HashSet<>(request.getPermissionIds());
+        Set<UUID> idsToRevoke = new HashSet<>(request.getPermissionIds());
         role.getPermissions().removeIf(p -> idsToRevoke.contains(p.getId()));
 
         return toResponse(roleRepository.save(role));

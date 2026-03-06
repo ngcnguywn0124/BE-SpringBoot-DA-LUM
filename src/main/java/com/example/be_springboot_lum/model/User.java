@@ -63,11 +63,11 @@ public class User {
     @Column(name = "student_id", length = 50)
     private String studentId;
 
-    @Column(name = "university_id")
-    private Integer universityId;
+    @Column(name = "university_id", columnDefinition = "uuid")
+    private UUID universityId;
 
-    @Column(name = "campus_id")
-    private Integer campusId;
+    @Column(name = "campus_id", columnDefinition = "uuid")
+    private UUID campusId;
 
     @Column(name = "faculty", length = 255)
     private String faculty;

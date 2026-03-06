@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Role Controller
@@ -47,7 +48,7 @@ public class RoleController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<RoleResponse>> getRoleById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<RoleResponse>> getRoleById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(roleService.getRoleById(id)));
     }
 
@@ -69,7 +70,7 @@ public class RoleController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<RoleResponse>> updateRole(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody RoleRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật role thành công",
                 roleService.updateRole(id, request)));
@@ -81,7 +82,7 @@ public class RoleController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable UUID id) {
         roleService.deleteRole(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa role thành công", null));
     }
@@ -93,7 +94,7 @@ public class RoleController {
     @PostMapping("/{id}/permissions")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<RoleResponse>> assignPermissions(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody AssignPermissionsRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Gán quyền thành công",
                 roleService.assignPermissions(id, request)));
@@ -106,7 +107,7 @@ public class RoleController {
     @DeleteMapping("/{id}/permissions")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<RoleResponse>> revokePermissions(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody AssignPermissionsRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Thu hồi quyền thành công",
                 roleService.revokePermissions(id, request)));

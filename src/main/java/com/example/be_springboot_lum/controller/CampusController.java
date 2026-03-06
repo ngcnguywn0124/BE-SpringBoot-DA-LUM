@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Campus Controller
@@ -33,7 +34,7 @@ public class CampusController {
      */
     @GetMapping("${api.prefix}/universities/{universityId}/campuses")
     public ResponseEntity<ApiResponse<List<CampusResponse>>> getCampusesByUniversity(
-            @PathVariable Integer universityId) {
+            @PathVariable UUID universityId) {
         return ResponseEntity.ok(
                 ApiResponse.success(campusService.getCampusesByUniversity(universityId)));
     }
@@ -43,7 +44,7 @@ public class CampusController {
      * Public – không cần xác thực.
      */
     @GetMapping("${api.prefix}/campuses/{id}")
-    public ResponseEntity<ApiResponse<CampusResponse>> getCampusById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<CampusResponse>> getCampusById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(campusService.getCampusById(id)));
     }
 
@@ -66,7 +67,7 @@ public class CampusController {
     @PutMapping("${api.prefix}/campuses/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<CampusResponse>> updateCampus(
-            @PathVariable Integer id,
+            @PathVariable UUID id,
             @Valid @RequestBody CampusRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công",
                 campusService.updateCampus(id, request)));
@@ -78,7 +79,7 @@ public class CampusController {
      */
     @DeleteMapping("${api.prefix}/campuses/{id}")
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteCampus(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> deleteCampus(@PathVariable UUID id) {
         campusService.deleteCampus(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa cơ sở thành công", null));
     }

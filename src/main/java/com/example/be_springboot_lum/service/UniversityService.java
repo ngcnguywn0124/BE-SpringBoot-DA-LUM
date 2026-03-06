@@ -4,16 +4,17 @@ import com.example.be_springboot_lum.dto.request.UniversityRequest;
 import com.example.be_springboot_lum.dto.response.UniversityResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UniversityService {
 
     List<UniversityResponse> getAllUniversities(String keyword);
 
-    UniversityResponse getUniversityById(Integer id);
+    UniversityResponse getUniversityById(UUID id);
 
     UniversityResponse createUniversity(UniversityRequest request);
 
-    UniversityResponse updateUniversity(Integer id, UniversityRequest request);
+    UniversityResponse updateUniversity(UUID id, UniversityRequest request);
 
-    void deleteUniversity(Integer id);
+    void deleteUniversity(UUID id);
 }

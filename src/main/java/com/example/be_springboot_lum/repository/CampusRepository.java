@@ -5,11 +5,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface CampusRepository extends JpaRepository<Campus, Integer> {
+public interface CampusRepository extends JpaRepository<Campus, UUID> {
 
-    List<Campus> findByUniversity_UniversityId(Integer universityId);
+    List<Campus> findByUniversity_UniversityId(UUID universityId);
 
-    boolean existsByCampusNameAndUniversity_UniversityId(String campusName, Integer universityId);
+    Optional<Campus> findBySlug(String slug);
+
+    boolean existsByCampusNameAndUniversity_UniversityId(String campusName, UUID universityId);
 }

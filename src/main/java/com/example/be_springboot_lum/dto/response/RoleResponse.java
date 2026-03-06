@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,7 +13,7 @@ import java.util.Set;
 @Builder
 public class RoleResponse {
 
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private Set<PermissionResponse> permissions;

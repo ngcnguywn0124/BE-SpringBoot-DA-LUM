@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "campuses")
@@ -16,9 +17,9 @@ import java.time.OffsetDateTime;
 public class Campus {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "campus_id")
-    private Integer campusId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "campus_id", columnDefinition = "uuid", updatable = false, nullable = false)
+    private UUID campusId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "university_id", nullable = false)
@@ -26,6 +27,9 @@ public class Campus {
 
     @Column(name = "campus_name", nullable = false, length = 255)
     private String campusName;
+
+    @Column(name = "slug", unique = true, length = 255)
+    private String slug;
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
