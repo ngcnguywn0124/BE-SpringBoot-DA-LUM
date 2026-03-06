@@ -25,6 +25,21 @@ public enum ErrorCode {
     // User errors
     USER_NOT_FOUND(2001, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
 
+    // University errors
+    UNIVERSITY_NOT_FOUND(2010, "Không tìm thấy trường đại học", HttpStatus.NOT_FOUND),
+    UNIVERSITY_ALREADY_EXISTS(2011, "Tên trường đại học đã tồn tại", HttpStatus.CONFLICT),
+
+    // Campus errors
+    CAMPUS_NOT_FOUND(2020, "Không tìm thấy cơ sở / campus", HttpStatus.NOT_FOUND),
+    CAMPUS_ALREADY_EXISTS(2021, "Tên cơ sở đã tồn tại trong trường này", HttpStatus.CONFLICT),
+
+    // Role errors
+    ROLE_NOT_FOUND(2030, "Không tìm thấy role", HttpStatus.NOT_FOUND),
+    ROLE_ALREADY_EXISTS(2031, "Tên role đã tồn tại", HttpStatus.CONFLICT),
+
+    // Permission errors (entity)
+    PERMISSION_NOT_FOUND(2040, "Không tìm thấy permission", HttpStatus.NOT_FOUND),
+
     // Permission errors
     ACCESS_DENIED(3001, "Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN),
     UNAUTHORIZED(3002, "Vui lòng đăng nhập để tiếp tục", HttpStatus.UNAUTHORIZED),
