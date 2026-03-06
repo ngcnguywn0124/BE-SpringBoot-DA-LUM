@@ -13,6 +13,7 @@ import com.example.be_springboot_lum.repository.PasswordResetTokenRepository;
 import com.example.be_springboot_lum.repository.RoleRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.repository.UserSessionRepository;
+import com.example.be_springboot_lum.repository.OAuthAccountRepository;
 import com.example.be_springboot_lum.security.JwtTokenProvider;
 import com.example.be_springboot_lum.service.AuthService;
 import com.example.be_springboot_lum.service.EmailService;
@@ -37,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserSessionRepository userSessionRepository;
     private final RoleRepository roleRepository;
+    private final OAuthAccountRepository oAuthAccountRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -47,6 +49,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        if (!request.isAcceptTerms()) {
+            throw new AppException(ErrorCode.TERMS_NOT_ACCEPTED);
+        }
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -151,6 +156,11 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             log.info("Forgot password: email {} không tồn tại trong hệ thống", request.getEmail());
             return;
+        }
+
+        // Kiểm tra xem người dùng này có đăng nhập bằng mạng xã hội không
+        if (oAuthAccountRepository.existsByUserUserId(user.getUserId())) {
+            throw new AppException(ErrorCode.SOCIAL_ACCOUNT_PASSWORD_RESET_NOT_ALLOWED);
         }
 
         // Xóa token cũ nếu có

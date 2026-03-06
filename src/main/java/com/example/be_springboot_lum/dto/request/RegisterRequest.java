@@ -28,4 +28,6 @@ public class RegisterRequest {
         message = "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, thường, số và ký tự đặc biệt"
     )
     private String password;
+
+    private boolean acceptTerms;
 }

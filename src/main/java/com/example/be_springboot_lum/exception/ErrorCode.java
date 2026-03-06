@@ -31,7 +31,9 @@ public enum ErrorCode {
 
     // General errors
     VALIDATION_ERROR(4001, "Dữ liệu đầu vào không hợp lệ", HttpStatus.BAD_REQUEST),
-    INTERNAL_SERVER_ERROR(5000, "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR);
+    INTERNAL_SERVER_ERROR(5000, "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
+    TERMS_NOT_ACCEPTED(4002, "Bạn phải đồng ý với điều khoản sử dụng", HttpStatus.BAD_REQUEST),
+    SOCIAL_ACCOUNT_PASSWORD_RESET_NOT_ALLOWED(4003, "Tài khoản đăng nhập bằng mạng xã hội không thể đặt lại mật khẩu", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

@@ -15,4 +15,6 @@ public interface OAuthAccountRepository extends JpaRepository<OAuthAccount, UUID
      * Ví dụ: provider="google", providerUserId="1234567890"
      */
     Optional<OAuthAccount> findByProviderAndProviderUserId(String provider, String providerUserId);
+
+    boolean existsByUserUserId(UUID userId);
 }
