@@ -279,7 +279,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/")
                 .maxAge(accessTokenAge)
-                .sameSite("Lax")
+                .sameSite("Lax") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
                 .build();
 
         // Refresh token chỉ được gửi đến /api/v1/auth (tăng bảo mật)
@@ -288,7 +288,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/api/v1/auth")
                 .maxAge(refreshTokenAge)
-                .sameSite("Lax")
+                .sameSite("Lax") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
