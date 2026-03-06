@@ -6,6 +6,7 @@ import com.example.be_springboot_lum.dto.response.AuthResponse;
 import com.example.be_springboot_lum.dto.response.UserResponse;
 import com.example.be_springboot_lum.exception.AppException;
 import com.example.be_springboot_lum.exception.ErrorCode;
+import com.example.be_springboot_lum.security.JwtTokenProvider;
 import com.example.be_springboot_lum.service.AuthService;
 import com.example.be_springboot_lum.service.GoogleOAuthService;
 import jakarta.servlet.http.Cookie;
@@ -31,6 +32,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final GoogleOAuthService googleOAuthService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * Thời gian sống của cookie khớp với JWT expiration.
@@ -41,6 +43,9 @@ public class AuthController {
 
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpirationMs;
+
+    @Value("${jwt.remember-me-expiration:2592000000}")
+    private long rememberMeExpirationMs;
 
     /** true trong môi trường production (HTTPS) */
     @Value("${app.cookie.secure:false}")
@@ -62,7 +67,7 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             HttpServletResponse response) {
         AuthResponse authResponse = authService.register(request);
-        setAuthCookies(response, authResponse);
+        setAuthCookies(response, authResponse, false);
         return ResponseEntity.status(201).body(ApiResponse.created(authResponse.getUser()));
     }
 
@@ -75,7 +80,7 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletResponse response) {
         AuthResponse authResponse = authService.login(request);
-        setAuthCookies(response, authResponse);
+        setAuthCookies(response, authResponse, request.isRememberMe());
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", authResponse.getUser()));
     }
 
@@ -112,7 +117,18 @@ public class AuthController {
         refreshTokenRequest.setRefreshToken(refreshToken);
 
         AuthResponse authResponse = authService.refreshToken(refreshTokenRequest);
-        setAuthCookies(response, authResponse);
+        
+        // Khi refresh token, chúng ta kiểm tra thời hạn còn lại để xác định xem có nên tiếp tục rememberMe không
+        // Ở đây đơn giản là giữ nguyên if it was long-lived
+        boolean isRememberMe = false; 
+        try {
+            long expiry = jwtTokenProvider.extractAllClaims(authResponse.getRefreshToken()).getExpiration().getTime();
+            if (expiry - System.currentTimeMillis() > refreshTokenExpirationMs + 1000000) {
+                isRememberMe = true;
+            }
+        } catch(Exception e) {}
+
+        setAuthCookies(response, authResponse, isRememberMe);
         return ResponseEntity.ok(ApiResponse.success(authResponse.getUser()));
     }
 
@@ -243,7 +259,7 @@ public class AuthController {
         }
 
         // Set JWT cookies
-        setAuthCookies(response, authResponse);
+        setAuthCookies(response, authResponse, true); // Google login thường mặc định rememberMe
 
         // Redirect về frontend (trang chủ hoặc trang đã được chỉ định)
         response.sendRedirect(frontendUrl + "/");
@@ -254,12 +270,15 @@ public class AuthController {
     // ─────────────────────────────────────────────────────────────────────────
 
     /** Set cả hai httpOnly cookie: accessToken (path=/) và refreshToken (path=/api/v1/auth). */
-    private void setAuthCookies(HttpServletResponse response, AuthResponse authResponse) {
+    private void setAuthCookies(HttpServletResponse response, AuthResponse authResponse, boolean rememberMe) {
+        long accessTokenAge = accessTokenExpirationMs / 1000;
+        long refreshTokenAge = (rememberMe ? rememberMeExpirationMs : refreshTokenExpirationMs) / 1000;
+
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResponse.getAccessToken())
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .path("/")
-                .maxAge(accessTokenExpirationMs / 1000)
+                .maxAge(accessTokenAge)
                 .sameSite("Lax")
                 .build();
 
@@ -268,7 +287,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .path("/api/v1/auth")
-                .maxAge(refreshTokenExpirationMs / 1000)
+                .maxAge(refreshTokenAge)
                 .sameSite("Lax")
                 .build();
 

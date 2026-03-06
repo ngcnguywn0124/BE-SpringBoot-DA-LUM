@@ -25,6 +25,9 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration; // ms
 
+    @Value("${jwt.remember-me-expiration:2592000000}") // Default 30 days
+    private long rememberMeExpiration; // ms
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -53,11 +56,16 @@ public class JwtTokenProvider {
     // ── Refresh Token ─────────────────────────────────────────────────────────
 
     public String generateRefreshToken(UUID userId) {
+        return generateRefreshToken(userId, false);
+    }
+
+    public String generateRefreshToken(UUID userId, boolean rememberMe) {
+        long expiration = rememberMe ? rememberMeExpiration : refreshTokenExpiration;
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("type", "refresh")
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -102,5 +110,9 @@ public class JwtTokenProvider {
 
     public long getRefreshTokenExpirationMs() {
         return refreshTokenExpiration;
+    }
+
+    public long getRememberMeExpirationMs() {
+        return rememberMeExpiration;
     }
 }

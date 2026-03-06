@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         // Gửi email chào mừng bất đồng bộ
         emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
 
-        return buildAuthResponse(user);
+        return buildAuthResponse(user, false);
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);
 
-        return buildAuthResponse(user);
+        return buildAuthResponse(user, request.isRememberMe());
     }
 
     // ── Logout ────────────────────────────────────────────────────────────────
@@ -141,7 +141,9 @@ public class AuthServiceImpl implements AuthService {
         // Xóa session cũ, tạo session mới (Refresh Token Rotation)
         userSessionRepository.delete(session);
 
-        return buildAuthResponse(user);
+        // Giữ nguyên trạng thái rememberMe nếu session cũ còn hiệu lực lâu
+        boolean isRememberMe = session.getExpiresAt().isAfter(OffsetDateTime.now().plusWeeks(1));
+        return buildAuthResponse(user, isRememberMe);
     }
 
     // ── Forgot Password ───────────────────────────────────────────────────────
@@ -245,21 +247,24 @@ public class AuthServiceImpl implements AuthService {
 
     // ── Private Helpers ───────────────────────────────────────────────────────
 
-    private AuthResponse buildAuthResponse(User user) {
+    private AuthResponse buildAuthResponse(User user, boolean rememberMe) {
         Set<String> roleNames = user.getRoles().stream()
                 .map(Role::getName)
                 .collect(Collectors.toSet());
 
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getUserId(), user.getEmail(), roleNames);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUserId());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUserId(), rememberMe);
+
+        long refreshTokenExpiry = rememberMe 
+                ? jwtTokenProvider.getRememberMeExpirationMs() 
+                : jwtTokenProvider.getRefreshTokenExpirationMs();
 
         // Lưu refresh token vào DB (user_sessions)
         UserSession session = UserSession.builder()
                 .user(user)
                 .refreshToken(refreshToken)
-                .expiresAt(OffsetDateTime.now().plusSeconds(
-                        jwtTokenProvider.getAccessTokenExpirationMs() / 1000 * 7)) // 7 * access expiry
+                .expiresAt(OffsetDateTime.now().plusSeconds(refreshTokenExpiry / 1000))
                 .build();
         userSessionRepository.save(session);
 
