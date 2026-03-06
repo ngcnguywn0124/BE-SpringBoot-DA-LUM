@@ -39,6 +39,16 @@ spring.mail.properties.mail.smtp.starttls.enable=true
 # Frontend URL (Used for Password Reset links and CORS)
 app.frontend-url=http://localhost:3000
 
+# Google OAuth2
+# Create credentials at https://console.cloud.google.com/apis/credentials
+# Set Authorized redirect URI to: http://localhost:8686/api/v1/auth/google/callback
+google.oauth2.client-id=your-google-client-id.apps.googleusercontent.com
+google.oauth2.client-secret=your-google-client-secret
+google.oauth2.callback-url=http://localhost:8686/api/v1/auth/google/callback
+google.oauth2.authorization-uri=https://accounts.google.com/o/oauth2/v2/auth
+google.oauth2.token-uri=https://oauth2.googleapis.com/token
+google.oauth2.userinfo-uri=https://www.googleapis.com/oauth2/v3/userinfo
+
 # Async Thread Pool Configuration
 spring.task.execution.pool.core-size=5
 spring.task.execution.pool.max-size=20

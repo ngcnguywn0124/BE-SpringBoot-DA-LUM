@@ -63,7 +63,9 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/auth/forgot-password",
                     "/api/v1/auth/reset-password",
-                    "/api/v1/auth/refresh-token"
+                    "/api/v1/auth/refresh-token",
+                    "/api/v1/auth/google/authorize",
+                    "/api/v1/auth/google/callback"
                 ).permitAll()
 
                 // Public endpoints – đọc sản phẩm / danh mục

@@ -16,6 +16,12 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(1007, "Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
     CURRENT_PASSWORD_INCORRECT(1008, "Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST),
 
+    // OAuth errors
+    OAUTH_GOOGLE_INVALID_TOKEN(1009, "Google token không hợp lệ", HttpStatus.UNAUTHORIZED),
+    OAUTH_ACCOUNT_NOT_LINKED(1010, "Tài khoản chưa liên kết với mạng xã hội", HttpStatus.BAD_REQUEST),
+    OAUTH_STATE_MISMATCH(1011, "OAuth state không hợp lệ, vui lòng thử lại", HttpStatus.BAD_REQUEST),
+    OAUTH_CODE_EXCHANGE_FAILED(1012, "Không thể đổi authorization code, vui lòng thử lại", HttpStatus.BAD_GATEWAY),
+
     // User errors
     USER_NOT_FOUND(2001, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
 

@@ -7,6 +7,7 @@ import com.example.be_springboot_lum.dto.response.UserResponse;
 import com.example.be_springboot_lum.exception.AppException;
 import com.example.be_springboot_lum.exception.ErrorCode;
 import com.example.be_springboot_lum.service.AuthService;
+import com.example.be_springboot_lum.service.GoogleOAuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("${api.prefix}/auth")
@@ -27,6 +30,7 @@ import java.util.Arrays;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleOAuthService googleOAuthService;
 
     /**
      * Thời gian sống của cookie khớp với JWT expiration.
@@ -41,6 +45,9 @@ public class AuthController {
     /** true trong môi trường production (HTTPS) */
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Public endpoints
@@ -156,6 +163,93 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Google OAuth2 endpoints
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET /api/v1/auth/google/authorize
+     * <p>
+     * Bước 1 của Google OAuth2 flow:
+     * - Tạo state token ngẫu nhiên (chống CSRF).
+     * - Lưu state vào httpOnly cookie ngắn hạn (5 phút).
+     * - Redirect browser đến Google Authorization Endpoint.
+     * <p>
+     * Frontend gọi: window.location.href = "/api/v1/auth/google/authorize"
+     */
+    @GetMapping("/google/authorize")
+    public void googleAuthorize(HttpServletResponse response) throws IOException {
+        // Tạo state ngẫu nhiên để chống CSRF
+        String state = UUID.randomUUID().toString();
+
+        // Lưu state vào httpOnly cookie (5 phút)
+        ResponseCookie stateCookie = ResponseCookie.from("oauth2_state", state)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/api/v1/auth/google")
+                .maxAge(300) // 5 phút
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, stateCookie.toString());
+
+        // Redirect đến Google
+        String authUrl = googleOAuthService.buildAuthorizationUrl(state);
+        response.sendRedirect(authUrl);
+    }
+
+    /**
+     * GET /api/v1/auth/google/callback?code=...&state=...
+     * <p>
+     * Bước 2 của Google OAuth2 flow (Google redirect về đây sau khi user đồng ý):
+     * - Xác thực state chống CSRF.
+     * - Đổi authorization code lấy Google token.
+     * - Tìm / tạo user trong DB.
+     * - Set JWT httpOnly cookies.
+     * - Redirect về frontend.
+     */
+    @GetMapping("/google/callback")
+    public void googleCallback(
+            @RequestParam String code,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String error,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
+        // Nếu user từ chối cấp quyền
+        if (error != null) {
+            response.sendRedirect(frontendUrl + "/?error=google_denied");
+            return;
+        }
+
+        // Xác thực state chống CSRF
+        String savedState = extractCookie(request, "oauth2_state");
+        if (savedState == null || !savedState.equals(state)) {
+            response.sendRedirect(frontendUrl + "/?error=invalid_state");
+            return;
+        }
+
+        // Xóa state cookie
+        ResponseCookie clearState = ResponseCookie.from("oauth2_state", "")
+                .httpOnly(true).secure(cookieSecure)
+                .path("/api/v1/auth/google").maxAge(0).sameSite("Lax").build();
+        response.addHeader(HttpHeaders.SET_COOKIE, clearState.toString());
+
+        // Xử lý callback: đổi code → token → user → JWT
+        AuthResponse authResponse;
+        try {
+            authResponse = googleOAuthService.handleCallback(code);
+        } catch (Exception e) {
+            response.sendRedirect(frontendUrl + "/?error=google_failed");
+            return;
+        }
+
+        // Set JWT cookies
+        setAuthCookies(response, authResponse);
+
+        // Redirect về frontend (trang chủ hoặc trang đã được chỉ định)
+        response.sendRedirect(frontendUrl + "/");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -203,4 +297,3 @@ public class AuthController {
                 .orElse(null);
     }
 }
-
