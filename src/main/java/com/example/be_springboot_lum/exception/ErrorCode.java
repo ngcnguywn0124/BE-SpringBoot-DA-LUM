@@ -40,6 +40,16 @@ public enum ErrorCode {
     // Permission errors (entity)
     PERMISSION_NOT_FOUND(2040, "Không tìm thấy permission", HttpStatus.NOT_FOUND),
 
+    // Category errors
+    CATEGORY_NOT_FOUND(2050, "Không tìm thấy danh mục", HttpStatus.NOT_FOUND),
+    CATEGORY_ALREADY_EXISTS(2051, "Tên danh mục đã tồn tại trong cấp này", HttpStatus.CONFLICT),
+    CATEGORY_CIRCULAR_REFERENCE(2052, "Không thể đặt danh mục con thành cha của chính nó", HttpStatus.BAD_REQUEST),
+    CATEGORY_HAS_PRODUCTS(2053, "Danh mục đang có sản phẩm, không thể xóa", HttpStatus.CONFLICT),
+    CATEGORY_HAS_CHILDREN(2054, "Danh mục đang có danh mục con, vui lòng xóa danh mục con trước", HttpStatus.CONFLICT),
+
+    // Cloudinary errors
+    CLOUDINARY_UPLOAD_FAILED(2060, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // Permission errors
     ACCESS_DENIED(3001, "Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN),
     UNAUTHORIZED(3002, "Vui lòng đăng nhập để tiếp tục", HttpStatus.UNAUTHORIZED),

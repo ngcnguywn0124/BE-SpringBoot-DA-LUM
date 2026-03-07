@@ -41,8 +41,14 @@ public class User {
     @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
+    @Column(name = "avatar_id", length = 255)
+    private String avatarId;
+
     @Column(name = "cover_url", columnDefinition = "TEXT")
     private String coverUrl;
+
+    @Column(name = "cover_id", length = 255)
+    private String coverId;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
