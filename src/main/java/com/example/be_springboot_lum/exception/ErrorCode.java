@@ -47,8 +47,17 @@ public enum ErrorCode {
     CATEGORY_HAS_PRODUCTS(2053, "Danh mục đang có sản phẩm, không thể xóa", HttpStatus.CONFLICT),
     CATEGORY_HAS_CHILDREN(2054, "Danh mục đang có danh mục con, vui lòng xóa danh mục con trước", HttpStatus.CONFLICT),
 
+    // Product Attribute errors
+    PRODUCT_ATTRIBUTE_NOT_FOUND(2060, "Không tìm thấy thuộc tính sản phẩm", HttpStatus.NOT_FOUND),
+    PRODUCT_ATTRIBUTE_ALREADY_EXISTS(2061, "Tên thuộc tính đã tồn tại trong danh mục này", HttpStatus.CONFLICT),
+    PRODUCT_ATTRIBUTE_SELECT_OPTIONS_REQUIRED(2062, "Thuộc tính kiểu 'select' phải có ít nhất 2 lựa chọn", HttpStatus.BAD_REQUEST),
+
+    // Tag errors
+    TAG_NOT_FOUND(2070, "Không tìm thấy tag", HttpStatus.NOT_FOUND),
+    TAG_ALREADY_EXISTS(2071, "Tên tag đã tồn tại", HttpStatus.CONFLICT),
+
     // Cloudinary errors
-    CLOUDINARY_UPLOAD_FAILED(2060, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),
+    CLOUDINARY_UPLOAD_FAILED(2080, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Permission errors
     ACCESS_DENIED(3001, "Bạn không có quyền thực hiện hành động này", HttpStatus.FORBIDDEN),

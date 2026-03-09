@@ -68,13 +68,15 @@ public class SecurityConfig {
                     "/api/v1/auth/google/callback"
                 ).permitAll()
 
-                // Public endpoints – đọc sản phẩm / danh mục / trường & campus
+                // Public endpoints – đọc sản phẩm / danh mục / trường & campus / thuộc tính / tags
                 .requestMatchers(HttpMethod.GET,
                     "/api/v1/products/**",
                     "/api/v1/categories/**",
                     "/api/v1/users/*/profile",
                     "/api/v1/universities/**",
-                    "/api/v1/campuses/**"
+                    "/api/v1/campuses/**",
+                    "/api/v1/product-attributes/**",
+                    "/api/v1/tags/**"
                 ).permitAll()
 
                 // Admin only (ROLE_ADMIN + ROLE_SUPER_ADMIN)
