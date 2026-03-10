@@ -56,6 +56,17 @@ public enum ErrorCode {
     TAG_NOT_FOUND(2070, "Không tìm thấy tag", HttpStatus.NOT_FOUND),
     TAG_ALREADY_EXISTS(2071, "Tên tag đã tồn tại", HttpStatus.CONFLICT),
 
+    // Product errors
+    PRODUCT_NOT_FOUND(2090, "Không tìm thấy tin đăng", HttpStatus.NOT_FOUND),
+    PRODUCT_FORBIDDEN(2091, "Bạn không có quyền thao tác trên tin đăng này", HttpStatus.FORBIDDEN),
+    PRODUCT_IMAGE_REQUIRED(2092, "Tin đăng cần ít nhất 1 ảnh", HttpStatus.BAD_REQUEST),
+    PRODUCT_IMAGE_LIMIT_EXCEEDED(2093, "Tin đăng không được có quá 10 ảnh", HttpStatus.BAD_REQUEST),
+    PRODUCT_PRICE_OR_FREE_REQUIRED(2094, "Vui lòng nhập giá hoặc chọn 'Miễn phí'", HttpStatus.BAD_REQUEST),
+    PRODUCT_STATUS_INVALID_TRANSITION(2095, "Không thể chuyển trạng thái tin đăng sang trạng thái này", HttpStatus.BAD_REQUEST),
+    PRODUCT_ALREADY_DELETED(2096, "Tin đăng đã bị xóa", HttpStatus.GONE),
+    PRODUCT_RENEWAL_LIMIT_EXCEEDED(2097, "Tin đăng chỉ được gia hạn tối đa 3 lần", HttpStatus.BAD_REQUEST),
+    PRODUCT_NOT_EXPIRED(2098, "Chỉ có thể gia hạn khi tin đăng đã hết hạn", HttpStatus.BAD_REQUEST),
+
     // Cloudinary errors
     CLOUDINARY_UPLOAD_FAILED(2080, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),
 
