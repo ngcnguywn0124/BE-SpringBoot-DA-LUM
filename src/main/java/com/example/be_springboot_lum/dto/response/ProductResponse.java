@@ -44,6 +44,7 @@ public class ProductResponse {
 
     // ─── Trạng thái & thống kê ───────────────────────────────────────────────
     private String status;
+    private String previousStatus;
     private Integer viewCount;
     private Integer favoriteCount;
     private Integer messageCount;

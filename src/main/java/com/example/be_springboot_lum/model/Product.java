@@ -124,6 +124,9 @@ public class Product {
     @Builder.Default
     private String status = "pending";
 
+    @Column(name = "previous_status", length = 20)
+    private String previousStatus;
+
     // ─── Thời hạn ──────────────────────────────────────────────────────────
 
     @Column(name = "expiry_days")

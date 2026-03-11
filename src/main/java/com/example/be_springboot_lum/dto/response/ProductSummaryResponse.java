@@ -27,6 +27,7 @@ public class ProductSummaryResponse {
     private Boolean isNegotiable;
     private String listingType;
     private String status;
+    private String previousStatus;
     private Integer viewCount;
     private Integer favoriteCount;
     private Boolean isFeatured;

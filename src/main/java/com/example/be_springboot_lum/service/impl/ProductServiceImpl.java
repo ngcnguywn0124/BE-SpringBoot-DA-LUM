@@ -205,15 +205,20 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateProduct(UUID productId, ProductRequest request, List<MultipartFile> newImages) {
         Product product = getOwnedProduct(productId);
 
-        // Không cho sửa tin đã xóa, đã hết hạn hoặc bị admin ẩn
+        // Không cho sửa tin đã xóa, đã hết hạn.
+        // Nếu bị admin ẩn: chỉ cho sửa nếu trạng thái trước đó là 'pending' (đang chờ duyệt)
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
         if ("expired".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_NOT_EXPIRED);
         }
+
         if ("admin_hidden".equals(product.getStatus())) {
-            throw new AppException(ErrorCode.ACCESS_DENIED);
+            // Chỉ cho phép sửa nếu trước khi bị ẩn, tin đó đang ở trạng thái 'pending'
+            if (!"pending".equals(product.getPreviousStatus())) {
+                throw new AppException(ErrorCode.ACCESS_DENIED);
+            }
         }
 
         // Validate giá
@@ -268,8 +273,9 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Khi sửa tin → về lại pending để duyệt
-        if ("available".equals(product.getStatus())) {
+        if ("available".equals(product.getStatus()) || "admin_hidden".equals(product.getStatus())) {
             product.setStatus("pending");
+            product.setPreviousStatus(null); // Xóa previousStatus sau khi đã quay lại pending
         }
 
         productRepository.save(product);
@@ -429,12 +435,27 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse approveProduct(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
         // Cho phép duyệt tin đang đợi, tin bị ẩn hoặc tin bị admin ẩn
         if (!"pending".equals(product.getStatus()) && !"hidden".equals(product.getStatus()) && !"admin_hidden".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_STATUS_INVALID_TRANSITION);
         }
-        product.setStatus("available");
-        product.setApprovedAt(OffsetDateTime.now());
+
+        // Nếu admin 'mở khóa' tin bị admin_hidden
+        if ("admin_hidden".equals(product.getStatus())) {
+            // Quay lại trạng thái trước đó (previousStatus)
+            String restoreStatus = (product.getPreviousStatus() != null) ? product.getPreviousStatus() : "available";
+            product.setStatus(restoreStatus);
+            // Nếu trạng thái phục hồi là available, mới set approvedAt
+            if ("available".equals(restoreStatus)) {
+                product.setApprovedAt(OffsetDateTime.now());
+            }
+        } else {
+            // Duyệt tin mới (pending -> available)
+            product.setStatus("available");
+            product.setApprovedAt(OffsetDateTime.now());
+        }
+
         return toFullResponse(productRepository.save(product));
     }
 
@@ -443,9 +464,16 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse hideProduct(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
+
+        // Lưu trạng thái hiện tại trước khi admin ẩn
+        if (!"admin_hidden".equals(product.getStatus())) {
+            product.setPreviousStatus(product.getStatus());
+        }
+
         // Admin ẩn sẽ là admin_hidden
         product.setStatus("admin_hidden");
         return toFullResponse(productRepository.save(product));
@@ -636,6 +664,7 @@ public class ProductServiceImpl implements ProductService {
                 .isNegotiable(p.getIsNegotiable())
                 .listingType(p.getListingType())
                 .status(p.getStatus())
+                .previousStatus(p.getPreviousStatus())
                 .viewCount(p.getViewCount())
                 .favoriteCount(p.getFavoriteCount())
                 .isFeatured(p.getIsFeatured())
@@ -704,6 +733,7 @@ public class ProductServiceImpl implements ProductService {
                 .zaloLink(p.getZaloLink())
                 .facebookLink(p.getFacebookLink())
                 .status(p.getStatus())
+                .previousStatus(p.getPreviousStatus())
                 .viewCount(p.getViewCount())
                 .favoriteCount(p.getFavoriteCount())
                 .messageCount(p.getMessageCount())
