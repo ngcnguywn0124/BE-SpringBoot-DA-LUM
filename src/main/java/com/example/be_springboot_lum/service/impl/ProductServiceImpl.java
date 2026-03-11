@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class ProductServiceImpl implements ProductService {
     private final CampusRepository               campusRepository;
     private final CloudinaryService              cloudinaryService;
     private final SecurityUtils                  securityUtils;
+    private final SimpMessagingTemplate          messagingTemplate;
 
     @Value("${cloudinary.upload-folder:lum}")
     private String baseFolder;
@@ -112,9 +114,18 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @Scheduled(cron = "0 0 * * * *") // Chạy mỗi giờ (tại phút 0)
     public void checkAndExpireProducts() {
+        // Tìm các tin sắp bị expired để gửi thông báo trước khi query update tập thể
+        List<Product> nearingExpiry = productRepository.findAllByStatusAndExpiresAtBefore("available", OffsetDateTime.now());
+        
         int updated = productRepository.updateExpiredProducts();
         if (updated > 0) {
             log.info("Đã cập nhật trạng thái 'expired' cho {} tin đăng đã quá hạn", updated);
+            
+            // Gửi thông báo realtime cho từng chủ tin
+            for (Product p : nearingExpiry) {
+                String destination = "/user/" + p.getSeller().getUserId() + "/queue/notifications";
+                messagingTemplate.convertAndSend(destination, "PRODUCT_EXPIRED:" + p.getProductId());
+            }
         }
     }
 
@@ -353,6 +364,41 @@ public class ProductServiceImpl implements ProductService {
         // Ảnh có thể giữ lại trên Cloudinary hoặc xóa tùy chính sách
     }
 
+    @Override
+    @Transactional
+    public void setPrimaryImage(UUID productId, UUID imageId) {
+        // Kiểm tra quyền sở hữu sản phẩm
+        Product product = getOwnedProduct(productId);
+
+        // Lấy tất cả ảnh hiện có của sản phẩm
+        List<ProductImage> allImages = productImageRepository.findByProduct_ProductIdOrderByDisplayOrderAscCreatedAtAsc(productId);
+
+        // Tìm ảnh cần set làm primary
+        ProductImage targetImage = allImages.stream()
+                .filter(img -> img.getImageId().equals(imageId))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND));
+
+        // 1. Reset isPrimary của tất cả ảnh
+        for (ProductImage img : allImages) {
+            img.setIsPrimary(false);
+        }
+
+        // 2. Cập nhật ảnh đích lên đầu (displayOrder = 0) và set isPrimary
+        targetImage.setIsPrimary(true);
+        targetImage.setDisplayOrder(0);
+
+        // 3. Cập nhật lại displayOrder cho các ảnh còn lại
+        int order = 1;
+        for (ProductImage img : allImages) {
+            if (!img.getImageId().equals(imageId)) {
+                img.setDisplayOrder(order++);
+            }
+        }
+
+        productImageRepository.saveAll(allImages);
+    }
+
     // ═════════════════════════════════════════════════════════════════════════
     // Admin
     // ═════════════════════════════════════════════════════════════════════════
@@ -435,7 +481,7 @@ public class ProductServiceImpl implements ProductService {
                     .imageUrl(res.getUrl())
                     .imageCloudId(res.getPublicId())
                     .displayOrder(i)
-                    .isPrimary(i == 0)
+                    .isPrimary(i == 0) // Ảnh đầu tiên trong danh sách gửi lên sẽ là primary
                     .build());
         }
         productImageRepository.saveAll(productImages);

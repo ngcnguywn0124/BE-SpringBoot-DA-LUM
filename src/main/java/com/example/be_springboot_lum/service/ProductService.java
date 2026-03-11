@@ -55,6 +55,9 @@ public interface ProductService {
     /** Xóa mềm tin đăng (chuyển sang status = 'deleted') */
     void deleteProduct(UUID productId);
 
+    /** Đặt một ảnh làm ảnh chính (is_primary = true) */
+    void setPrimaryImage(UUID productId, UUID imageId);
+
     // ─── Admin ────────────────────────────────────────────────────────────────
 
     /** Admin xem tất cả tin (lọc theo status + keyword) */

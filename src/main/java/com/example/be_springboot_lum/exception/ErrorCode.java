@@ -66,6 +66,8 @@ public enum ErrorCode {
     PRODUCT_ALREADY_DELETED(2096, "Tin đăng đã bị xóa", HttpStatus.GONE),
     PRODUCT_RENEWAL_LIMIT_EXCEEDED(2097, "Tin đăng chỉ được gia hạn tối đa 3 lần", HttpStatus.BAD_REQUEST),
     PRODUCT_NOT_EXPIRED(2098, "Chỉ có thể gia hạn khi tin đăng đã hết hạn", HttpStatus.BAD_REQUEST),
+    IMAGE_NOT_FOUND(2100, "Không tìm thấy hình ảnh", HttpStatus.NOT_FOUND),
+    IMAGE_NOT_BELONG_TO_PRODUCT(2101, "Hình ảnh không thuộc về sản phẩm này", HttpStatus.BAD_REQUEST),
 
     // Cloudinary errors
     CLOUDINARY_UPLOAD_FAILED(2080, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),

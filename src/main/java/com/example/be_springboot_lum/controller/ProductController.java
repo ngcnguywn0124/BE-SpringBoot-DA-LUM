@@ -34,6 +34,7 @@ import java.util.UUID;
  * │ GET    /api/v1/products/my           – Tin của bản thân                       │
  * │ PATCH  /api/v1/products/{id}/sold    – Đánh dấu đã bán                       │
  * │ PATCH  /api/v1/products/{id}/toggle-hidden – Ẩn / hiện tin                   │
+ * │ PATCH  /api/v1/products/{id}/primary-image/{imageId} – Đặt ảnh bìa          │
  * │ DELETE /api/v1/products/{id}         – Xóa mềm tin đăng                      │
  * ├─ [ADMIN / SUPER_ADMIN] ────────────────────────────────────────────────────────┤
  * │ GET    /api/v1/products/admin        – Tất cả tin (lọc trạng thái + keyword)  │
@@ -283,6 +284,22 @@ public class ProductController {
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa tin đăng", null));
+    }
+
+    /**
+     * Đặt một hình ảnh làm ảnh chính (is_primary = true).
+     *
+     * <pre>
+     * PATCH /api/v1/products/{id}/primary-image/{imageId}
+     * </pre>
+     */
+    @PatchMapping("/{id}/primary-image/{imageId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> setPrimaryImage(
+            @PathVariable UUID id,
+            @PathVariable UUID imageId) {
+        productService.setPrimaryImage(id, imageId);
+        return ResponseEntity.ok(ApiResponse.success("Đã cập nhật ảnh bìa", null));
     }
 
     // ═════════════════════════════════════════════════════════════════════════

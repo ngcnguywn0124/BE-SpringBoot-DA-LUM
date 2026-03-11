@@ -76,6 +76,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.productId = :id")
     void incrementViewCount(@Param("id") UUID id);
 
+    /** Tìm danh sách tin đăng theo trạng thái và thời gian hết hạn trước một mốc */
+    java.util.List<com.example.be_springboot_lum.model.Product> findAllByStatusAndExpiresAtBefore(String status, java.time.OffsetDateTime dateTime);
+
     /** Tự động cập nhật trạng thái hết hạn cho các tin available đã quá hạn */
     @Modifying
     @Query("UPDATE Product p SET p.status = 'expired' WHERE p.status = 'available' AND p.expiresAt < CURRENT_TIMESTAMP")
