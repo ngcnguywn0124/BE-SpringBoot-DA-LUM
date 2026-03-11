@@ -76,6 +76,7 @@ public class ProductResponse {
     private String sellerName;
     private String sellerAvatar;
     private Double sellerReputation;
+    private Long sellerTotalSales;
 
     // ─── Quan hệ ─────────────────────────────────────────────────────────────
     private List<ProductImageResponse> images;

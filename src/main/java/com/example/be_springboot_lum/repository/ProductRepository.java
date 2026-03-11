@@ -19,6 +19,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     /** Tìm theo slug (public detail) */
     Optional<Product> findBySlugAndStatusNot(String slug, String status);
 
+    /** Đếm sản phẩm đã bán của một người bán */
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :sellerId AND p.status = 'sold'")
+    long countSoldProductsBySellerId(@Param("sellerId") UUID sellerId);
+
     /** Danh sách tin của một người bán, phân trang */
     Page<Product> findBySeller_UserIdAndStatusNotOrderByCreatedAtDesc(
             UUID sellerId, String excludeStatus, Pageable pageable);

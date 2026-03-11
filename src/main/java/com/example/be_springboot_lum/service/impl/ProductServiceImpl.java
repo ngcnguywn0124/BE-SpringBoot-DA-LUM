@@ -743,6 +743,12 @@ public class ProductServiceImpl implements ProductService {
                         .build())
                 .collect(Collectors.toList());
 
+        // Thống kê số sản phẩm đã bán của người bán
+        Long sellerTotalSales = 0L;
+        if (p.getSeller() != null) {
+            sellerTotalSales = productRepository.countSoldProductsBySellerId(p.getSeller().getUserId());
+        }
+
         return ProductResponse.builder()
                 .productId(p.getProductId())
                 .title(p.getTitle())
@@ -785,6 +791,7 @@ public class ProductServiceImpl implements ProductService {
                 .sellerName(p.getSeller() != null ? p.getSeller().getFullName() : null)
                 .sellerAvatar(p.getSeller() != null ? p.getSeller().getAvatarUrl() : null)
                 .sellerReputation(p.getSeller() != null ? p.getSeller().getReputationScore().doubleValue() : null)
+                .sellerTotalSales(sellerTotalSales)
                 .images(imageResponses)
                 .attributeValues(attrResponses)
                 .tags(tagResponses)
