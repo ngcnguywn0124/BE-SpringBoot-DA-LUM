@@ -33,6 +33,7 @@ public class ProductSummaryResponse {
     private Integer imageCount;
     private Integer renewalCount;
     private OffsetDateTime createdAt;
+    private OffsetDateTime approvedAt;
     private OffsetDateTime expiresAt;
 
     // ─── Ảnh thumbnail ───────────────────────────────────────────────────────

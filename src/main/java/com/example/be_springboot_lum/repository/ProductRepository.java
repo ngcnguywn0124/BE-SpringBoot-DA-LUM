@@ -88,9 +88,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("""
             SELECT p FROM Product p
             WHERE (:status IS NULL OR p.status = :status)
-              AND (:keyword IS NULL
-                   OR LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
-            ORDER BY p.createdAt DESC
+              AND (:keyword IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')))
             """)
     Page<Product> findAllForAdmin(
             @Param("status")  String status,

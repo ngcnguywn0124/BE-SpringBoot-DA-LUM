@@ -118,7 +118,7 @@ public class Product {
     // ─── Trạng thái ──────────────────────────────────────────────────────────
 
     /**
-     * available | pending | hidden | expired | sold | deleted
+     * available | pending | hidden | expired | sold | deleted | admin_hidden
      */
     @Column(name = "status", length = 20)
     @Builder.Default
@@ -164,6 +164,9 @@ public class Product {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Column(name = "approved_at")
+    private OffsetDateTime approvedAt;
 
     @Column(name = "sold_at")
     private OffsetDateTime soldAt;

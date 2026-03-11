@@ -55,6 +55,7 @@ public class ProductResponse {
     // ─── Timestamps ───────────────────────────────────────────────────────────
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private OffsetDateTime approvedAt;
     private OffsetDateTime soldAt;
 
     // ─── Danh mục ────────────────────────────────────────────────────────────

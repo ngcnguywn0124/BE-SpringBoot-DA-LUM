@@ -205,12 +205,15 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse updateProduct(UUID productId, ProductRequest request, List<MultipartFile> newImages) {
         Product product = getOwnedProduct(productId);
 
-        // Không cho sửa tin đã xóa hoặc đã hết hạn
+        // Không cho sửa tin đã xóa, đã hết hạn hoặc bị admin ẩn
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
         if ("expired".equals(product.getStatus())) {
-            throw new AppException(ErrorCode.PRODUCT_NOT_EXPIRED); // Tận dụng code 2098 hoặc dùng lỗi chung
+            throw new AppException(ErrorCode.PRODUCT_NOT_EXPIRED);
+        }
+        if ("admin_hidden".equals(product.getStatus())) {
+            throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
         // Validate giá
@@ -323,6 +326,10 @@ public class ProductServiceImpl implements ProductService {
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
+        // Nếu tin bị admin ẩn, người dùng không thể tự unhide
+        if ("admin_hidden".equals(product.getStatus())) {
+            throw new AppException(ErrorCode.ACCESS_DENIED);
+        }
         product.setStatus("hidden".equals(product.getStatus()) ? "available" : "hidden");
         return toFullResponse(productRepository.save(product));
     }
@@ -407,9 +414,13 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductSummaryResponse> getAllProductsForAdmin(String status, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        String cleanStatus = (status != null && !status.trim().isEmpty()) ? status.trim() : null;
+        String cleanKeyword = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
         return productRepository.findAllForAdmin(
-                (status != null && status.isBlank()) ? null : status,
-                (keyword != null && keyword.isBlank()) ? null : keyword,
+                cleanStatus,
+                cleanKeyword,
                 pageable).map(this::toSummary);
     }
 
@@ -418,10 +429,12 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse approveProduct(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
-        if (!"pending".equals(product.getStatus()) && !"hidden".equals(product.getStatus())) {
+        // Cho phép duyệt tin đang đợi, tin bị ẩn hoặc tin bị admin ẩn
+        if (!"pending".equals(product.getStatus()) && !"hidden".equals(product.getStatus()) && !"admin_hidden".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_STATUS_INVALID_TRANSITION);
         }
         product.setStatus("available");
+        product.setApprovedAt(OffsetDateTime.now());
         return toFullResponse(productRepository.save(product));
     }
 
@@ -433,7 +446,8 @@ public class ProductServiceImpl implements ProductService {
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
-        product.setStatus("hidden");
+        // Admin ẩn sẽ là admin_hidden
+        product.setStatus("admin_hidden");
         return toFullResponse(productRepository.save(product));
     }
 
@@ -628,6 +642,7 @@ public class ProductServiceImpl implements ProductService {
                 .imageCount(p.getImages() != null ? p.getImages().size() : 0)
                 .renewalCount(p.getRenewalCount())
                 .createdAt(p.getCreatedAt())
+                .approvedAt(p.getApprovedAt())
                 .expiresAt(p.getExpiresAt())
                 .thumbnailUrl(thumbnail)
                 .categoryId(p.getCategory() != null ? p.getCategory().getCategoryId() : null)
@@ -698,6 +713,7 @@ public class ProductServiceImpl implements ProductService {
                 .expiresAt(p.getExpiresAt())
                 .createdAt(p.getCreatedAt())
                 .updatedAt(p.getUpdatedAt())
+                .approvedAt(p.getApprovedAt())
                 .soldAt(p.getSoldAt())
                 .categoryId(p.getCategory() != null ? p.getCategory().getCategoryId() : null)
                 .categoryName(p.getCategory() != null ? p.getCategory().getCategoryName() : null)
