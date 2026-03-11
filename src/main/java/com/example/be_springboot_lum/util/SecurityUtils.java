@@ -36,4 +36,15 @@ public class SecurityUtils {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
+
+    /**
+     * Kiểm tra xem người dùng hiện tại có vai trò cụ thể hay không.
+     */
+    public boolean hasRole(String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) return false;
+        
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(role) || a.getAuthority().equals("ROLE_" + role));
+    }
 }

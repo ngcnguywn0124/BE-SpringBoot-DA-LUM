@@ -368,13 +368,41 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(UUID productId) {
-        Product product = getOwnedProduct(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        // Nếu là người dùng thường thì phải kiểm tra quyền sở hữu
+        if (!securityUtils.hasRole("ROLE_ADMIN") && !securityUtils.hasRole("ROLE_SUPER_ADMIN") && !securityUtils.hasRole("ROLE_MODERATOR")) {
+            UUID currentUserId = securityUtils.getCurrentUserId();
+            if (!product.getSeller().getUserId().equals(currentUserId)) {
+                throw new AppException(ErrorCode.PRODUCT_FORBIDDEN);
+            }
+        }
+
         if ("deleted".equals(product.getStatus())) {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
+
         product.setStatus("deleted");
         productRepository.save(product);
-        // Ảnh có thể giữ lại trên Cloudinary hoặc xóa tùy chính sách
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteProduct(UUID productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+        
+        // Xóa thuộc tính, tags, ảnh (DB + Cloudinary) trước khi xóa product
+        attributeValueRepository.deleteByProduct_ProductId(productId);
+        productTagRepository.deleteByProduct_ProductId(productId);
+        
+        // Lấy lại entity để xóa ảnh
+        Product product = productRepository.findById(productId).get();
+        deleteAllImages(product);
+        
+        productRepository.deleteById(productId);
     }
 
     @Override

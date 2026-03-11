@@ -280,10 +280,24 @@ public class ProductController {
      * </pre>
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_MODERATOR')")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa tin đăng", null));
+    }
+
+    /**
+     * Xóa cứng tin đăng khỏi hệ thống (chỉ SUPER_ADMIN).
+     *
+     * <pre>
+     * DELETE /api/v1/products/{id}/hard
+     * </pre>
+     */
+    @DeleteMapping("/{id}/hard")
+    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> hardDeleteProduct(@PathVariable UUID id) {
+        productService.hardDeleteProduct(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa vĩnh viễn tin đăng", null));
     }
 
     /**
