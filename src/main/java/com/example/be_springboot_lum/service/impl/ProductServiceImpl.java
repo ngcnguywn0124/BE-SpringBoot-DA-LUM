@@ -123,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
             
             // Gửi thông báo realtime cho từng chủ tin
             for (Product p : nearingExpiry) {
-                String destination = "/user/" + p.getSeller().getUserId() + "/queue/notifications";
+                String destination = "/topic/user-" + p.getSeller().getUserId();
                 messagingTemplate.convertAndSend(destination, "PRODUCT_EXPIRED:" + p.getProductId());
             }
         }
@@ -197,7 +197,16 @@ public class ProductServiceImpl implements ProductService {
         // Lưu tags
         saveTags(product, request.getTagIds(), request.getNewTagNames());
 
-        return toFullResponse(productRepository.findById(product.getProductId()).orElseThrow());
+        ProductResponse response = toFullResponse(productRepository.findById(product.getProductId()).orElseThrow());
+
+        // Gửi thông báo realtime cho admin khi có tin mới
+        try {
+            messagingTemplate.convertAndSend("/topic/admin/products", "NEW_PRODUCT_CREATED");
+        } catch (Exception e) {
+            log.warn("Không thể gửi thông báo WebSocket cho admin về tin mới: {}", e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
@@ -484,7 +493,17 @@ public class ProductServiceImpl implements ProductService {
             product.setApprovedAt(OffsetDateTime.now());
         }
 
-        return toFullResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+
+        // Gửi event realtime cho chủ tin và trang chi tiết sản phẩm
+        publishProductStatusEvent(
+                saved.getProductId(),
+                saved.getSeller().getUserId(),
+                saved.getStatus(),
+                "Tin đăng của bạn đã được duyệt và hiển thị trên hệ thống."
+        );
+
+        return toFullResponse(saved);
     }
 
     @Override
@@ -504,7 +523,17 @@ public class ProductServiceImpl implements ProductService {
 
         // Admin ẩn sẽ là admin_hidden
         product.setStatus("admin_hidden");
-        return toFullResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+
+        // Gửi event realtime cho chủ tin và trang chi tiết sản phẩm
+        publishProductStatusEvent(
+                saved.getProductId(),
+                saved.getSeller().getUserId(),
+                saved.getStatus(),
+                "Tin đăng của bạn đã bị ẩn bởi quản trị viên."
+        );
+
+        return toFullResponse(saved);
     }
 
     @Override
@@ -519,6 +548,24 @@ public class ProductServiceImpl implements ProductService {
     // ═════════════════════════════════════════════════════════════════════════
     // Private helpers
     // ═════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Gửi sự kiện thay đổi trạng thái tin đăng qua WebSocket.
+     * - Gửi riêng tư cho chủ tin: /user/{ownerId}/queue/notifications
+     * - Gửi công khai cho trang chi tiết:  /topic/products/{productId}
+     */
+    private void publishProductStatusEvent(UUID productId, UUID ownerId, String newStatus, String message) {
+        String json = String.format(
+                "{\"type\":\"PRODUCT_STATUS_CHANGED\",\"productId\":\"%s\",\"newStatus\":\"%s\",\"message\":\"%s\"}",
+                productId, newStatus, message
+        );
+        try {
+            messagingTemplate.convertAndSend("/topic/user-" + ownerId, json);
+            messagingTemplate.convertAndSend("/topic/products/" + productId, json);
+        } catch (Exception e) {
+            log.warn("Không thể gửi WebSocket event cho sản phẩm {}: {}", productId, e.getMessage());
+        }
+    }
 
     /** Lấy product và kiểm tra quyền sở hữu */
     private Product getOwnedProduct(UUID productId) {
