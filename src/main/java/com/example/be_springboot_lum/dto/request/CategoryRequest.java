@@ -28,5 +28,8 @@ public class CategoryRequest {
     @Max(value = 9999, message = "Thứ tự hiển thị không được vượt quá 9999")
     private Integer displayOrder;
 
+    @Size(max = 100, message = "Tên icon không được vượt quá 100 ký tự")
+    private String iconName;
+
     private Boolean isActive;
 }

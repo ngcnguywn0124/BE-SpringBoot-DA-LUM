@@ -38,6 +38,9 @@ public class Category {
     @Column(name = "image_cloud_id", length = 255)
     private String imageCloudId;
 
+    @Column(name = "icon_name", length = 100)
+    private String iconName;
+
     @Column(name = "display_order")
     @Builder.Default
     private Integer displayOrder = 0;

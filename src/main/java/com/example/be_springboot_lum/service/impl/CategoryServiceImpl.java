@@ -96,6 +96,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .categoryName(request.getCategoryName())
                 .slug(slug)
                 .description(request.getDescription())
+                .iconName(request.getIconName())
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .parent(parent)
@@ -129,6 +130,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setCategoryName(request.getCategoryName());
         category.setSlug(SlugUtils.toSlug(request.getCategoryName()));
         category.setDescription(request.getDescription());
+        category.setIconName(request.getIconName());
         category.setParent(parent);
         if (request.getDisplayOrder() != null) {
             category.setDisplayOrder(request.getDisplayOrder());
@@ -235,6 +237,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .description(c.getDescription())
                 .imageUrl(c.getImageUrl())
                 .imageCloudId(c.getImageCloudId())
+                .iconName(c.getIconName())
                 .displayOrder(c.getDisplayOrder())
                 .isActive(c.getIsActive())
                 .createdAt(c.getCreatedAt());

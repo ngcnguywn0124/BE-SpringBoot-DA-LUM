@@ -21,6 +21,7 @@ public class CategoryResponse {
     private String description;
     private String imageUrl;
     private String imageCloudId;
+    private String iconName;
     private Integer displayOrder;
     private Boolean isActive;
     private OffsetDateTime createdAt;
