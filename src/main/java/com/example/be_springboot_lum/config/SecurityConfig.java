@@ -68,6 +68,9 @@ public class SecurityConfig {
                     "/api/v1/auth/google/callback"
                 ).permitAll()
 
+                // Public WebSocket endpoint
+                .requestMatchers("/api/v1/ws/**").permitAll()
+
                 // Public endpoints – đọc sản phẩm / danh mục / trường & campus / thuộc tính / tags
                 .requestMatchers(HttpMethod.GET,
                     "/api/v1/products/**",
