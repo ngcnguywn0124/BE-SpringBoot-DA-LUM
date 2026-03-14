@@ -43,6 +43,7 @@ public class ProductSummaryResponse {
     // ─── Danh mục ────────────────────────────────────────────────────────────
     private UUID categoryId;
     private String categoryName;
+    private String categorySlug;
 
     // ─── Trường học ──────────────────────────────────────────────────────────
     private String universityShortName;

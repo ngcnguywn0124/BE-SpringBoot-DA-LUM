@@ -751,6 +751,7 @@ public class ProductServiceImpl implements ProductService {
                 .thumbnailUrl(thumbnail)
                 .categoryId(p.getCategory() != null ? p.getCategory().getCategoryId() : null)
                 .categoryName(p.getCategory() != null ? p.getCategory().getCategoryName() : null)
+                .categorySlug(p.getCategory() != null ? p.getCategory().getSlug() : null)
                 .universityShortName(p.getUniversity() != null ? p.getUniversity().getShortName() : null)
                 .campusName(p.getCampus() != null ? p.getCampus().getCampusName() : null)
                 .sellerId(p.getSeller() != null ? p.getSeller().getUserId() : null)
