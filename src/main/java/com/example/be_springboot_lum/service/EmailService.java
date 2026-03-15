@@ -61,6 +61,25 @@ public class EmailService {
         }
     }
 
+        @Async
+        public void sendVerificationCodeEmail(String toEmail, String fullName, String verificationCode) {
+          try {
+            var message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("[LỤM.vn] Mã xác thực tài khoản");
+
+            String html = buildVerificationCodeEmailHtml(fullName, verificationCode);
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.info("Đã gửi email mã xác thực tới: {}", toEmail);
+          } catch (Exception e) {
+            log.error("Lỗi khi gửi email mã xác thực tới {}: {}", toEmail, e.getMessage());
+          }
+        }
+
     private String buildPasswordResetEmailHtml(String fullName, String resetLink) {
         return """
                 <!DOCTYPE html>
@@ -112,5 +131,33 @@ public class EmailService {
                 </body>
                 </html>
                 """.formatted(fullName);
+    }
+
+    private String buildVerificationCodeEmailHtml(String fullName, String verificationCode) {
+        return """
+                <!DOCTYPE html>
+                <html>
+                <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                  <div style="background:#059669; padding:20px; text-align:center;">
+                    <h1 style="color:#FFBA00; margin:0;">LỤM.vn</h1>
+                  </div>
+                  <div style="padding:32px 24px;">
+                    <h2>Xin chào %s,</h2>
+                    <p>Đây là mã xác thực tài khoản của bạn. Mã có hiệu lực trong <strong>10 phút</strong>.</p>
+                    <div style="text-align:center; margin: 24px 0;">
+                      <span style="display:inline-block; font-size:30px; letter-spacing:8px; font-weight:bold; color:#059669;">
+                        %s
+                      </span>
+                    </div>
+                    <p style="color:#888; font-size:13px;">
+                      Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.
+                    </p>
+                  </div>
+                  <div style="background:#f5f5f5; padding:16px; text-align:center; font-size:12px; color:#888;">
+                    © 2025 LỤM.vn - Sàn giao dịch đồ cũ sinh viên
+                  </div>
+                </body>
+                </html>
+                """.formatted(fullName, verificationCode);
     }
 }

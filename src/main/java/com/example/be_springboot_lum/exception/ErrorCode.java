@@ -71,6 +71,12 @@ public enum ErrorCode {
     FAVORITE_ALREADY_EXISTS(2102, "Tin đăng đã được lưu trước đó", HttpStatus.CONFLICT),
     FAVORITE_NOT_FOUND(2103, "Tin đăng chưa được lưu", HttpStatus.NOT_FOUND),
     PRODUCT_NOT_AVAILABLE_FOR_FAVORITE(2104, "Không thể lưu tin đăng ở trạng thái hiện tại", HttpStatus.BAD_REQUEST),
+    VERIFICATION_TYPE_INVALID(2105, "Loại xác thực không hợp lệ", HttpStatus.BAD_REQUEST),
+    VERIFICATION_CODE_INVALID(2106, "Mã xác thực không hợp lệ", HttpStatus.BAD_REQUEST),
+    VERIFICATION_CODE_EXPIRED(2107, "Mã xác thực đã hết hạn", HttpStatus.BAD_REQUEST),
+    VERIFICATION_REQUEST_NOT_FOUND(2108, "Không tìm thấy yêu cầu xác thực", HttpStatus.NOT_FOUND),
+    VERIFICATION_CONTACT_MISSING(2109, "Thiếu thông tin liên hệ để xác thực", HttpStatus.BAD_REQUEST),
+    CAMPUS_UNIVERSITY_MISMATCH(2110, "Campus không thuộc trường đại học đã chọn", HttpStatus.BAD_REQUEST),
 
     // Cloudinary errors
     CLOUDINARY_UPLOAD_FAILED(2080, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),
