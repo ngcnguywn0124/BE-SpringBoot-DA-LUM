@@ -35,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("""
             SELECT p FROM Product p
             WHERE p.status = 'available'
-              AND (:categoryId IS NULL OR p.category.categoryId = :categoryId)
+                                                        AND (:categoryId IS NULL OR p.category.categoryId = :categoryId OR p.category.parent.categoryId = :categoryId)
               AND (:universityId IS NULL OR p.university.universityId = :universityId)
               AND (:campusId IS NULL OR p.campus.campusId = :campusId)
               AND (:listingType IS NULL OR p.listingType = :listingType)

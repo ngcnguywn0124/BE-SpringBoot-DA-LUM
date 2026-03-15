@@ -30,6 +30,7 @@ public class ProductSummaryResponse {
     private String previousStatus;
     private Integer viewCount;
     private Integer favoriteCount;
+    private Boolean isFavorited;
     private Boolean isFeatured;
     private Integer imageCount;
     private Integer renewalCount;
@@ -43,6 +44,7 @@ public class ProductSummaryResponse {
     // ─── Danh mục ────────────────────────────────────────────────────────────
     private UUID categoryId;
     private String categoryName;
+    private String categorySlug;
 
     // ─── Trường học ──────────────────────────────────────────────────────────
     private String universityShortName;
