@@ -68,6 +68,9 @@ public enum ErrorCode {
     PRODUCT_NOT_EXPIRED(2098, "Chỉ có thể gia hạn khi tin đăng đã hết hạn", HttpStatus.BAD_REQUEST),
     IMAGE_NOT_FOUND(2100, "Không tìm thấy hình ảnh", HttpStatus.NOT_FOUND),
     IMAGE_NOT_BELONG_TO_PRODUCT(2101, "Hình ảnh không thuộc về sản phẩm này", HttpStatus.BAD_REQUEST),
+    FAVORITE_ALREADY_EXISTS(2102, "Tin đăng đã được lưu trước đó", HttpStatus.CONFLICT),
+    FAVORITE_NOT_FOUND(2103, "Tin đăng chưa được lưu", HttpStatus.NOT_FOUND),
+    PRODUCT_NOT_AVAILABLE_FOR_FAVORITE(2104, "Không thể lưu tin đăng ở trạng thái hiện tại", HttpStatus.BAD_REQUEST),
 
     // Cloudinary errors
     CLOUDINARY_UPLOAD_FAILED(2080, "Tải ảnh lên thất bại, vui lòng thử lại", HttpStatus.INTERNAL_SERVER_ERROR),

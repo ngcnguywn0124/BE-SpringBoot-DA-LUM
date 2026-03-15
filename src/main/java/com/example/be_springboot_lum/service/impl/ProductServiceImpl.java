@@ -21,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -44,6 +46,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository             categoryRepository;
     private final ProductAttributeRepository     productAttributeRepository;
     private final TagRepository                  tagRepository;
+    private final FavoriteRepository             favoriteRepository;
     private final UniversityRepository           universityRepository;
     private final CampusRepository               campusRepository;
     private final CloudinaryService              cloudinaryService;
@@ -166,10 +169,10 @@ public class ProductServiceImpl implements ProductService {
                 .category(category)
                 .university(university)
                 .campus(campus)
-                .title(request.getTitle())
+                    .title(request.getTitle())
                 .description(request.getDescription())
                 .slug(slug)
-                .condition(request.getCondition())
+                    .condition(request.getCondition())
                 .price(request.getPrice())
                 .isFree(request.getIsFree() != null ? request.getIsFree() : false)
                 .isNegotiable(request.getIsNegotiable() != null ? request.getIsNegotiable() : true)
@@ -742,6 +745,7 @@ public class ProductServiceImpl implements ProductService {
                 .previousStatus(p.getPreviousStatus())
                 .viewCount(p.getViewCount())
                 .favoriteCount(p.getFavoriteCount())
+                .isFavorited(isFavorited(p.getProductId()))
                 .isFeatured(p.getIsFeatured())
                 .imageCount(p.getImages() != null ? p.getImages().size() : 0)
                 .renewalCount(p.getRenewalCount())
@@ -818,6 +822,7 @@ public class ProductServiceImpl implements ProductService {
                 .previousStatus(p.getPreviousStatus())
                 .viewCount(p.getViewCount())
                 .favoriteCount(p.getFavoriteCount())
+                .isFavorited(isFavorited(p.getProductId()))
                 .messageCount(p.getMessageCount())
                 .expiryDays(p.getExpiryDays())
                 .renewalCount(p.getRenewalCount())
@@ -844,5 +849,31 @@ public class ProductServiceImpl implements ProductService {
                 .attributeValues(attrResponses)
                 .tags(tagResponses)
                 .build();
+    }
+
+    private Boolean isFavorited(UUID productId) {
+        UUID currentUserId = resolveCurrentUserIdOrNull();
+        if (currentUserId == null) {
+            return false;
+        }
+        return favoriteRepository.existsByUser_UserIdAndProduct_ProductId(currentUserId, productId);
+    }
+
+    private UUID resolveCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String principal = authentication.getName();
+        if (principal == null || principal.isBlank() || "anonymousUser".equalsIgnoreCase(principal)) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(principal);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 }

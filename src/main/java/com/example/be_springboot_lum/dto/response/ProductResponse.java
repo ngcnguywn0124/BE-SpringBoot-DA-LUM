@@ -47,6 +47,7 @@ public class ProductResponse {
     private String previousStatus;
     private Integer viewCount;
     private Integer favoriteCount;
+    private Boolean isFavorited;
     private Integer messageCount;
     private Integer expiryDays;
     private Integer renewalCount;
