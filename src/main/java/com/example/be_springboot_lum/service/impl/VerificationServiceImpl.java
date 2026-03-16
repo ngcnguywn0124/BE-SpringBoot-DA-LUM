@@ -4,6 +4,7 @@ import com.example.be_springboot_lum.dto.request.ReviewStudentVerificationReques
 import com.example.be_springboot_lum.dto.request.SendVerificationCodeRequest;
 import com.example.be_springboot_lum.dto.request.StudentVerificationRequest;
 import com.example.be_springboot_lum.dto.request.VerifyCodeRequest;
+import com.example.be_springboot_lum.dto.response.PendingStudentVerificationResponse;
 import com.example.be_springboot_lum.dto.response.UserVerificationResponse;
 import com.example.be_springboot_lum.exception.AppException;
 import com.example.be_springboot_lum.exception.ErrorCode;
@@ -155,7 +156,7 @@ public class VerificationServiceImpl implements VerificationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         UserVerification verification = userVerificationRepository
-                .findTopByUserUserIdAndVerificationTypeAndIsVerifiedFalseOrderByCreatedAtDesc(
+            .findTopByUserUserIdAndVerificationTypeAndIsVerifiedFalseOrderByCreatedAtDesc(
                         userId,
                         TYPE_STUDENT
                 )
@@ -167,13 +168,23 @@ public class VerificationServiceImpl implements VerificationService {
             targetUser.setIsStudentVerified(true);
         } else {
             verification.setIsVerified(false);
-            verification.setVerifiedAt(null);
+            verification.setVerifiedAt(OffsetDateTime.now());
             targetUser.setIsStudentVerified(false);
         }
 
         userRepository.save(targetUser);
         UserVerification reviewed = userVerificationRepository.save(verification);
         return toResponse(reviewed);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PendingStudentVerificationResponse> getPendingStudentVerifications() {
+        return userVerificationRepository
+                .findByVerificationTypeAndIsVerifiedFalseAndVerifiedAtIsNullOrderByCreatedAtDesc(TYPE_STUDENT)
+                .stream()
+                .map(this::toPendingStudentResponse)
+                .toList();
     }
 
     @Override
@@ -195,6 +206,39 @@ public class VerificationServiceImpl implements VerificationService {
                 .expiresAt(verification.getExpiresAt())
                 .verifiedAt(verification.getVerifiedAt())
                 .createdAt(verification.getCreatedAt())
+                .build();
+    }
+
+    private PendingStudentVerificationResponse toPendingStudentResponse(UserVerification verification) {
+        User user = verification.getUser();
+        String universityName = null;
+        if (user.getUniversityId() != null) {
+            universityName = universityRepository.findById(user.getUniversityId())
+                .map(University::getUniversityName)
+                .orElse(null);
+        }
+
+        String campusName = null;
+        if (user.getCampusId() != null) {
+            campusName = campusRepository.findById(user.getCampusId())
+                .map(Campus::getCampusName)
+                .orElse(null);
+        }
+
+        return PendingStudentVerificationResponse.builder()
+                .verificationId(verification.getVerificationId())
+                .userId(user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .studentId(user.getStudentId())
+                .universityId(user.getUniversityId())
+            .universityName(universityName)
+                .campusId(user.getCampusId())
+            .campusName(campusName)
+                .faculty(user.getFaculty())
+                .graduationYear(user.getGraduationYear())
+                .submittedAt(verification.getCreatedAt())
                 .build();
     }
 

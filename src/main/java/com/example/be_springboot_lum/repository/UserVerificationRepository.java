@@ -28,4 +28,8 @@ public interface UserVerificationRepository extends JpaRepository<UserVerificati
             UUID userId,
             String verificationType
     );
+
+    List<UserVerification> findByVerificationTypeAndIsVerifiedFalseAndVerifiedAtIsNullOrderByCreatedAtDesc(
+            String verificationType
+    );
 }

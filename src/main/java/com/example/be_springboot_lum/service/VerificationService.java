@@ -4,6 +4,7 @@ import com.example.be_springboot_lum.dto.request.ReviewStudentVerificationReques
 import com.example.be_springboot_lum.dto.request.SendVerificationCodeRequest;
 import com.example.be_springboot_lum.dto.request.StudentVerificationRequest;
 import com.example.be_springboot_lum.dto.request.VerifyCodeRequest;
+import com.example.be_springboot_lum.dto.response.PendingStudentVerificationResponse;
 import com.example.be_springboot_lum.dto.response.UserVerificationResponse;
 
 import java.util.List;
@@ -18,6 +19,8 @@ public interface VerificationService {
     UserVerificationResponse submitStudentVerification(StudentVerificationRequest request);
 
     UserVerificationResponse reviewStudentVerification(UUID userId, ReviewStudentVerificationRequest request);
+
+    List<PendingStudentVerificationResponse> getPendingStudentVerifications();
 
     List<UserVerificationResponse> getMyVerificationHistory();
 }

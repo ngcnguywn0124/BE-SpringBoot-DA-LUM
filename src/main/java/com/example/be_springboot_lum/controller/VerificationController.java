@@ -5,6 +5,7 @@ import com.example.be_springboot_lum.dto.request.ReviewStudentVerificationReques
 import com.example.be_springboot_lum.dto.request.SendVerificationCodeRequest;
 import com.example.be_springboot_lum.dto.request.StudentVerificationRequest;
 import com.example.be_springboot_lum.dto.request.VerifyCodeRequest;
+import com.example.be_springboot_lum.dto.response.PendingStudentVerificationResponse;
 import com.example.be_springboot_lum.dto.response.UserVerificationResponse;
 import com.example.be_springboot_lum.service.VerificationService;
 import jakarta.validation.Valid;
@@ -55,6 +56,12 @@ public class VerificationController {
                 : "Từ chối xác thực sinh viên thành công";
         return ResponseEntity.ok(ApiResponse.success(message,
                 verificationService.reviewStudentVerification(userId, request)));
+    }
+
+    @GetMapping("/student/pending")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<List<PendingStudentVerificationResponse>>> getPendingStudentVerifications() {
+        return ResponseEntity.ok(ApiResponse.success(verificationService.getPendingStudentVerifications()));
     }
 
     @GetMapping("/me")
