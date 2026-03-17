@@ -2,11 +2,14 @@ package com.example.be_springboot_lum.exception;
 
 import com.example.be_springboot_lum.common.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -38,6 +41,20 @@ public class GlobalExceptionHandler {
                         .code(ErrorCode.VALIDATION_ERROR.getCode())
                         .message(ErrorCode.VALIDATION_ERROR.getMessage())
                         .data(errors)
+                        .build());
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class,
+            MissingRequestHeaderException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleBadRequestException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<Void>builder()
+                        .code(ErrorCode.VALIDATION_ERROR.getCode())
+                        .message(ErrorCode.VALIDATION_ERROR.getMessage())
                         .build());
     }
 
