@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,12 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     /** Đếm sản phẩm đã bán của một người bán */
     @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :sellerId AND p.status = 'sold'")
     long countSoldProductsBySellerId(@Param("sellerId") UUID sellerId);
+
+    /** Đếm tổng tin của người bán, loại trừ các trạng thái ẩn/xóa */
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :sellerId AND p.status NOT IN :excludedStatuses")
+    long countListingsBySellerIdExcludingStatuses(
+            @Param("sellerId") UUID sellerId,
+            @Param("excludedStatuses") Collection<String> excludedStatuses);
 
     /** Danh sách tin của một người bán, phân trang */
     Page<Product> findBySeller_UserIdAndStatusNotOrderByCreatedAtDesc(
