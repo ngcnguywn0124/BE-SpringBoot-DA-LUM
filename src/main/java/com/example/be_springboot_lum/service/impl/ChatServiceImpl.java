@@ -208,10 +208,17 @@ public class ChatServiceImpl implements ChatService {
         // Gửi realtime qua WebSocket tới tất cả người tham gia
         List<ConversationParticipant> participants = participantRepository.findByConversationConversationId(request.getConversationId());
         for (ConversationParticipant p : participants) {
+            // 1) User-destination (/user/queue/...) – chuẩn STOMP, nhưng có thể fail khi đi qua proxy/ngrok
             messagingTemplate.convertAndSendToUser(
-                p.getUser().getUserId().toString(),
-                "/queue/messages",
-                response
+                    p.getUser().getUserId().toString(),
+                    "/queue/messages",
+                    response
+            );
+
+            // 2) Fallback broadcast theo topic user-specific – ổn định hơn trong môi trường proxy
+            messagingTemplate.convertAndSend(
+                    "/topic/user-" + p.getUser().getUserId(),
+                    response
             );
         }
 
