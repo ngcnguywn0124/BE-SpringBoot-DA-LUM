@@ -89,7 +89,11 @@ public enum ErrorCode {
     VALIDATION_ERROR(4001, "Dữ liệu đầu vào không hợp lệ", HttpStatus.BAD_REQUEST),
     INTERNAL_SERVER_ERROR(5000, "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR),
     TERMS_NOT_ACCEPTED(4002, "Bạn phải đồng ý với điều khoản sử dụng", HttpStatus.BAD_REQUEST),
-    SOCIAL_ACCOUNT_PASSWORD_RESET_NOT_ALLOWED(4003, "Tài khoản đăng nhập bằng mạng xã hội không thể đặt lại mật khẩu", HttpStatus.BAD_REQUEST);
+    SOCIAL_ACCOUNT_PASSWORD_RESET_NOT_ALLOWED(4003, "Tài khoản đăng nhập bằng mạng xã hội không thể đặt lại mật khẩu", HttpStatus.BAD_REQUEST),
+
+    // Chat errors
+    CONVERSATION_NOT_FOUND(3101, "Không tìm thấy cuộc hội thoại", HttpStatus.NOT_FOUND),
+    PARTICIPANT_NOT_FOUND(3102, "Bạn không thuộc cuộc hội thoại này", HttpStatus.NOT_FOUND);
 
     private final int code;
     private final String message;
