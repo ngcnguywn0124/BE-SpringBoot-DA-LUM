@@ -17,6 +17,8 @@ import com.example.be_springboot_lum.repository.MessageRepository;
 import com.example.be_springboot_lum.repository.ProductRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.service.ChatService;
+import com.example.be_springboot_lum.service.PresenceService;
+import com.example.be_springboot_lum.dto.response.PresenceEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,7 @@ public class ChatServiceImpl implements ChatService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final PresenceService presenceService;
 
     @Override
     @Transactional
@@ -170,8 +173,16 @@ public class ChatServiceImpl implements ChatService {
         participantRepository.findByConversationConversationIdAndUserUserId(conversationId, currentUserId)
                 .orElseThrow(() -> new RuntimeException("User is not part of this conversation"));
 
+        // Get other participant's lastReadAt to calculate 'seen' status
+        List<ConversationParticipant> others = participantRepository.findOtherParticipants(conversationId, currentUserId);
+        OffsetDateTime otherLastReadAt = others.stream()
+                .map(ConversationParticipant::getLastReadAt)
+                .filter(java.util.Objects::nonNull)
+                .max(OffsetDateTime::compareTo)
+                .orElse(null);
+
         Page<Message> messages = messageRepository.findByConversationConversationIdOrderByCreatedAtDesc(conversationId, pageable);
-        return messages.map(this::mapToMessageResponse);
+        return messages.map(m -> mapToMessageResponse(m, otherLastReadAt));
     }
 
     @Override
@@ -203,7 +214,8 @@ public class ChatServiceImpl implements ChatService {
         conversation.setUpdatedAt(OffsetDateTime.now());
         conversationRepository.save(conversation);
 
-        MessageResponse response = mapToMessageResponse(message);
+        // For a new message, it can't be 'seen' yet by others
+        MessageResponse response = mapToMessageResponse(message, null);
 
         // Gửi realtime qua WebSocket tới tất cả người tham gia
         List<ConversationParticipant> participants = participantRepository.findByConversationConversationId(request.getConversationId());
@@ -236,6 +248,31 @@ public class ChatServiceImpl implements ChatService {
         if (updatedRows == 0) {
             throw new AppException(ErrorCode.PARTICIPANT_NOT_FOUND);
         }
+
+        // Broadcast "seen" status to other participants
+        List<ConversationParticipant> others = participantRepository.findOtherParticipants(conversationId, currentUserId);
+        for (ConversationParticipant other : others) {
+            // Send a status update indicating this conversation is seen
+            // The FE expects {conversationId, status: 'seen'} or similar
+            // Since multiple messages might be seen, we can send a wrap event
+            java.util.Map<String, Object> statusUpdate = new java.util.HashMap<>();
+            statusUpdate.put("conversationId", conversationId);
+            statusUpdate.put("userId", currentUserId);
+            statusUpdate.put("status", "seen");
+            statusUpdate.put("timestamp", OffsetDateTime.now());
+
+            messagingTemplate.convertAndSendToUser(
+                    other.getUser().getUserId().toString(),
+                    "/queue/status",
+                    statusUpdate
+            );
+            
+            // Fallback for proxy/ngrok
+            messagingTemplate.convertAndSend(
+                    "/topic/user-" + other.getUser().getUserId() + "/status",
+                    (Object) statusUpdate
+            );
+        }
     }
 
     // Helpers
@@ -247,7 +284,8 @@ public class ChatServiceImpl implements ChatService {
         
         User otherUser = null;
         if (!others.isEmpty()) {
-            otherUser = others.get(0).getUser();
+            ConversationParticipant otherPart = others.get(0);
+            otherUser = otherPart.getUser();
         }
 
         ConversationResponse response = ConversationResponse.builder()
@@ -260,6 +298,11 @@ public class ChatServiceImpl implements ChatService {
             response.setOtherUserId(otherUser.getUserId());
             response.setOtherUserName(otherUser.getFullName());
             response.setOtherUserAvatarUrl(otherUser.getAvatarUrl());
+            
+            // Check real-time presence instead of hardcoded false
+            PresenceEvent presence = presenceService.getPresence(otherUser.getUserId()).orElse(null);
+            response.setOtherUserOnline(presence != null && presence.isOnline());
+            response.setOtherUserLastSeenAt(otherUser.getLastSeenAt());
         }
 
         if (conversation.getProduct() != null) {
@@ -289,13 +332,19 @@ public class ChatServiceImpl implements ChatService {
         return response;
     }
 
-    private MessageResponse mapToMessageResponse(Message message) {
+    private MessageResponse mapToMessageResponse(Message message, OffsetDateTime otherLastReadAt) {
         String content = message.getContent();
         String attachmentUrl = message.getAttachmentUrl();
         
         // Handle "images" type conversion to match frontend logic
         if ("images".equals(message.getMessageType()) && (content == null || content.isEmpty()) && attachmentUrl != null) {
             content = attachmentUrl;
+        }
+
+        String deliveryStatus = message.getDeliveryStatus();
+        // Dynamic "seen" calculation: Nếu tin nhắn được tạo TRƯỚC HOẶC BẰNG lúc người kia đọc lần cuối cùng
+        if (otherLastReadAt != null && !message.getCreatedAt().isAfter(otherLastReadAt)) {
+            deliveryStatus = "seen";
         }
 
         return MessageResponse.builder()
@@ -309,7 +358,7 @@ public class ChatServiceImpl implements ChatService {
                 .attachmentUrl(attachmentUrl)
                 .offerAmount(message.getOfferAmount())
                 .transactionEventType(message.getTransactionEventType())
-                .deliveryStatus(message.getDeliveryStatus())
+                .deliveryStatus(deliveryStatus)
                 .isEdited(message.getIsEdited())
                 .createdAt(message.getCreatedAt())
                 .build();

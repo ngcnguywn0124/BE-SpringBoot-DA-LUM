@@ -316,6 +316,7 @@ public class AuthServiceImpl implements AuthService {
                 .isActive(user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
+                .lastSeenAt(user.getLastSeenAt())
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.be_springboot_lum.config;
 
+import com.example.be_springboot_lum.security.JwtTokenProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -10,6 +11,12 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtTokenProvider jwtTokenProvider;
+
+    public WebSocketConfig(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -30,11 +37,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Điểm kết nối WebSocket chính
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*") // Nên thay bằng domain cụ thể của frontend khi deploy
+                .addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
+                .setHandshakeHandler(new JwtPrincipalHandshakeHandler())
                 .withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
+        // Legacy (không chuẩn bảo mật). Giữ tạm để không break nếu môi trường test không gửi được cookie vào handshake.
+        // Khi FE+BE chạy cùng origin HTTPS, JWT handshake phía trên là đủ và interceptor này gần như không còn tác dụng.
         registration.interceptors(new StompUserInterceptor());
     }
 }

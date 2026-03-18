@@ -143,4 +143,11 @@ public class User {
 
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;
+
+    /**
+     * Thời điểm hoạt động gần nhất (dùng cho "Hoạt động gần đây / last seen").
+     * Được cập nhật khi user disconnect WebSocket hoặc khi hệ thống ghi nhận activity.
+     */
+    @Column(name = "last_seen_at")
+    private OffsetDateTime lastSeenAt;
 }
