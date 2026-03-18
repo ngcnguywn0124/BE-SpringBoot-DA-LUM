@@ -19,6 +19,8 @@ public class ConversationResponse {
     private UUID otherUserId;
     private String otherUserName;
     private String otherUserAvatarUrl;
+    private Boolean otherUserOnline;
+    private OffsetDateTime otherUserLastSeenAt;
     
     // Linked Product details (optional)
     private UUID productId;

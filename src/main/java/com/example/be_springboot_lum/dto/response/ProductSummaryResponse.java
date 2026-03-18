@@ -54,4 +54,6 @@ public class ProductSummaryResponse {
     private UUID sellerId;
     private String sellerName;
     private String sellerAvatar;
+    private Boolean sellerIsOnline;
+    private OffsetDateTime sellerLastSeenAt;
 }

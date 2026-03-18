@@ -10,6 +10,8 @@ import com.example.be_springboot_lum.model.*;
 import com.example.be_springboot_lum.repository.*;
 import com.example.be_springboot_lum.service.CloudinaryService;
 import com.example.be_springboot_lum.service.ProductService;
+import com.example.be_springboot_lum.service.PresenceService;
+import com.example.be_springboot_lum.dto.response.PresenceEvent;
 import com.example.be_springboot_lum.util.SecurityUtils;
 import com.example.be_springboot_lum.util.SlugUtils;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,7 @@ public class ProductServiceImpl implements ProductService {
     private final CloudinaryService              cloudinaryService;
     private final SecurityUtils                  securityUtils;
     private final SimpMessagingTemplate          messagingTemplate;
+    private final PresenceService                presenceService;
 
     @Value("${cloudinary.upload-folder:lum}")
     private String baseFolder;
@@ -761,6 +764,8 @@ public class ProductServiceImpl implements ProductService {
                 .sellerId(p.getSeller() != null ? p.getSeller().getUserId() : null)
                 .sellerName(p.getSeller() != null ? p.getSeller().getFullName() : null)
                 .sellerAvatar(p.getSeller() != null ? p.getSeller().getAvatarUrl() : null)
+                .sellerIsOnline(p.getSeller() != null && presenceService.getPresence(p.getSeller().getUserId()).map(com.example.be_springboot_lum.dto.response.PresenceEvent::isOnline).orElse(false))
+                .sellerLastSeenAt(p.getSeller() != null ? p.getSeller().getLastSeenAt() : null)
                 .build();
     }
 
@@ -845,6 +850,8 @@ public class ProductServiceImpl implements ProductService {
                 .sellerAvatar(p.getSeller() != null ? p.getSeller().getAvatarUrl() : null)
                 .sellerReputation(p.getSeller() != null ? p.getSeller().getReputationScore().doubleValue() : null)
                 .sellerTotalSales(sellerTotalSales)
+                .sellerIsOnline(p.getSeller() != null && presenceService.getPresence(p.getSeller().getUserId()).map(com.example.be_springboot_lum.dto.response.PresenceEvent::isOnline).orElse(false))
+                .sellerLastSeenAt(p.getSeller() != null ? p.getSeller().getLastSeenAt() : null)
                 .images(imageResponses)
                 .attributeValues(attrResponses)
                 .tags(tagResponses)
