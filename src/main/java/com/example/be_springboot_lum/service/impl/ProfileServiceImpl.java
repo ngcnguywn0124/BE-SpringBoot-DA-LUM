@@ -15,6 +15,8 @@ import com.example.be_springboot_lum.repository.UniversityRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.service.CloudinaryService;
 import com.example.be_springboot_lum.service.ProfileService;
+import com.example.be_springboot_lum.service.PresenceService;
+import com.example.be_springboot_lum.dto.response.PresenceEvent;
 import com.example.be_springboot_lum.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProductRepository productRepository;
     private final CloudinaryService cloudinaryService;
     private final SecurityUtils securityUtils;
+    private final PresenceService presenceService;
 
     @Override
     @Transactional(readOnly = true)
@@ -220,6 +223,8 @@ public class ProfileServiceImpl implements ProfileService {
                 .isActive(user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
+                .lastSeenAt(user.getLastSeenAt())
+                .isOnline(presenceService.getPresence(user.getUserId()).map(PresenceEvent::isOnline).orElse(false))
                 .totalListings((int) totalListings)
                 .totalSold((int) soldCount)
                 .rating(rating)

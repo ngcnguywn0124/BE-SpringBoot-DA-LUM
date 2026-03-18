@@ -45,6 +45,8 @@ public class ProfileResponse {
     private Boolean isActive;
     private OffsetDateTime createdAt;
     private OffsetDateTime lastLoginAt;
+    private OffsetDateTime lastSeenAt;
+    private Boolean isOnline;
 
     // Statistics for UI
     private Integer totalListings;

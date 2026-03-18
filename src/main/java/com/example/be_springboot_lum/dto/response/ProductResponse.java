@@ -78,6 +78,8 @@ public class ProductResponse {
     private String sellerAvatar;
     private Double sellerReputation;
     private Long sellerTotalSales;
+    private Boolean sellerIsOnline;
+    private OffsetDateTime sellerLastSeenAt;
 
     // ─── Quan hệ ─────────────────────────────────────────────────────────────
     private List<ProductImageResponse> images;

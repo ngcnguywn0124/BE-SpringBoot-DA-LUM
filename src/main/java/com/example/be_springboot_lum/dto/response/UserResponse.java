@@ -39,4 +39,5 @@ public class UserResponse {
     private Boolean isActive;
     private OffsetDateTime createdAt;
     private OffsetDateTime lastLoginAt;
+    private OffsetDateTime lastSeenAt;
 }
