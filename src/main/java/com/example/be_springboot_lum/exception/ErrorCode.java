@@ -93,7 +93,18 @@ public enum ErrorCode {
 
     // Chat errors
     CONVERSATION_NOT_FOUND(3101, "Không tìm thấy cuộc hội thoại", HttpStatus.NOT_FOUND),
-    PARTICIPANT_NOT_FOUND(3102, "Bạn không thuộc cuộc hội thoại này", HttpStatus.NOT_FOUND);
+    PARTICIPANT_NOT_FOUND(3102, "Bạn không thuộc cuộc hội thoại này", HttpStatus.NOT_FOUND),
+
+    // Transaction errors
+    TRANSACTION_NOT_FOUND(4010, "Không tìm thấy giao dịch", HttpStatus.NOT_FOUND),
+    TRANSACTION_FORBIDDEN(4011, "Bạn không có quyền thao tác giao dịch này", HttpStatus.FORBIDDEN),
+    TRANSACTION_INVALID_STATUS(4012, "Chuyển trạng thái giao dịch không hợp lệ", HttpStatus.BAD_REQUEST),
+    TRANSACTION_PRODUCT_NOT_AVAILABLE(4013, "Sản phẩm không còn khả dụng để giao dịch", HttpStatus.CONFLICT),
+    TRANSACTION_ALREADY_EXISTS(4014, "Bạn đã có giao dịch đang diễn ra cho sản phẩm này", HttpStatus.CONFLICT),
+
+    // Notification errors
+    NOTIFICATION_NOT_FOUND(4020, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
+    NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;

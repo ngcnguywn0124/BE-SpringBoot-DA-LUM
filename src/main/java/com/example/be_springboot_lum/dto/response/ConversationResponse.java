@@ -41,4 +41,8 @@ public class ConversationResponse {
     // Self state
     private Boolean isPinned;
     private OffsetDateTime joinedAt;
+
+    // Transaction info
+    private UUID transactionId;
+    private String transactionStatus;
 }

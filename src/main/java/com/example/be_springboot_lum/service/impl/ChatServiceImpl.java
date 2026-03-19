@@ -15,6 +15,7 @@ import com.example.be_springboot_lum.repository.ConversationParticipantRepositor
 import com.example.be_springboot_lum.repository.ConversationRepository;
 import com.example.be_springboot_lum.repository.MessageRepository;
 import com.example.be_springboot_lum.repository.ProductRepository;
+import com.example.be_springboot_lum.repository.TransactionRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.service.ChatService;
 import com.example.be_springboot_lum.service.PresenceService;
@@ -37,6 +38,7 @@ public class ChatServiceImpl implements ChatService {
 
     private final ConversationRepository conversationRepository;
     private final ConversationParticipantRepository participantRepository;
+    private final TransactionRepository transactionRepository;
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
@@ -275,6 +277,12 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public long getUnreadCount(UUID currentUserId) {
+        return messageRepository.countUnreadMessagesForUser(currentUserId);
+    }
+
     // Helpers
     private ConversationResponse mapToConversationResponse(ConversationParticipant myParticipant) {
         Conversation conversation = myParticipant.getConversation();
@@ -314,6 +322,12 @@ public class ChatServiceImpl implements ChatService {
             response.setSellerId(product.getSeller().getUserId());
             response.setSellerPhone(product.getSeller().getPhoneNumber());
             // response.setProductImageUrl(product.getImageUrl());
+        }
+
+        if (conversation.getTransactionId() != null) {
+            response.setTransactionId(conversation.getTransactionId());
+            transactionRepository.findById(conversation.getTransactionId())
+                    .ifPresent(t -> response.setTransactionStatus(t.getStatus()));
         }
 
         // Fetch last message

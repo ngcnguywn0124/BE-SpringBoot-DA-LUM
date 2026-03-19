@@ -68,4 +68,9 @@ public class ChatController {
         chatService.markConversationAsRead(currentUserId, conversationId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/unread-count")
+    public ResponseEntity<Long> getUnreadCount(@RequestHeader("User-Id") UUID currentUserId) {
+        return ResponseEntity.ok(chatService.getUnreadCount(currentUserId));
+    }
 }
