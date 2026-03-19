@@ -16,6 +16,7 @@ import com.example.be_springboot_lum.repository.ConversationParticipantRepositor
 import com.example.be_springboot_lum.repository.ConversationRepository;
 import com.example.be_springboot_lum.repository.MessageRepository;
 import com.example.be_springboot_lum.repository.ProductRepository;
+import com.example.be_springboot_lum.repository.ReviewRepository;
 import com.example.be_springboot_lum.repository.TransactionRepository;
 import com.example.be_springboot_lum.repository.TransactionStatusHistoryRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
@@ -47,6 +48,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final ConversationRepository conversationRepository;
     private final ConversationParticipantRepository participantRepository;
     private final MessageRepository messageRepository;
+    private final ReviewRepository reviewRepository;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -135,7 +137,7 @@ public class TransactionServiceImpl implements TransactionService {
                 buyerId,
                 "transaction",
                 transaction.getTransactionId(),
-                "/giao-dich/" + transaction.getTransactionId());
+                "/tai-khoan/lich-su-giao-dich");
 
         return mapToResponse(transaction, fetchStatusHistory(transaction.getTransactionId()));
     }
@@ -271,7 +273,7 @@ public class TransactionServiceImpl implements TransactionService {
                 userId,
                 "transaction",
                 transaction.getTransactionId(),
-                "/giao-dich/" + transaction.getTransactionId());
+                "/tai-khoan/lich-su-giao-dich");
 
         return mapToResponse(transaction, fetchStatusHistory(transactionId));
     }
@@ -437,6 +439,8 @@ public class TransactionServiceImpl implements TransactionService {
                 ? product.getImages().get(0).getImageUrl()
                 : null;
 
+        boolean isReviewed = reviewRepository.existsByTransaction_TransactionId(t.getTransactionId());
+
         return TransactionResponse.builder()
                 .transactionId(t.getTransactionId())
                 // Product
@@ -466,6 +470,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .sellerConfirmedMeetup(t.getSellerConfirmedMeetup())
                 .buyerConfirmedPayment(t.getBuyerConfirmedPayment())
                 .sellerConfirmedPayment(t.getSellerConfirmedPayment())
+                // Review
+                .isReviewed(isReviewed)
                 // Cancel / dispute
                 .cancellationReason(t.getCancellationReason())
                 .cancelledBy(t.getCancelledBy())

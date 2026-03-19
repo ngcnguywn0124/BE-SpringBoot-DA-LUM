@@ -11,6 +11,7 @@ import com.example.be_springboot_lum.repository.ReviewRepository;
 import com.example.be_springboot_lum.repository.TransactionRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.service.ReviewService;
+import com.example.be_springboot_lum.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -67,6 +69,28 @@ public class ReviewServiceImpl implements ReviewService {
         Double currentAvg = reviewRepository.getAverageRatingByRevieweeId(reviewee.getUserId());
         reviewee.setReputationScore(java.math.BigDecimal.valueOf(currentAvg != null ? currentAvg : 0.0));
         userRepository.save(reviewee);
+
+        // Gửi thông báo cho người bán
+        notificationService.sendNotification(
+                reviewee.getUserId(),
+                "review_received",
+                "Bạn có đánh giá mới",
+                reviewer.getFullName() + " đã đánh giá giao dịch " + transaction.getProduct().getTitle(),
+                reviewer.getUserId(),
+                "review",
+                review.getReviewId(),
+                "/tai-khoan/" + reviewee.getUserId() + "?tab=reviews");
+
+        // Gửi thông báo cho người mua (xác nhận thành công)
+        notificationService.sendNotification(
+                reviewer.getUserId(),
+                "review_sent",
+                "Đánh giá thành công",
+                "Bạn đã đánh giá " + reviewee.getFullName() + " cho giao dịch " + transaction.getProduct().getTitle(),
+                reviewee.getUserId(),
+                "review",
+                review.getReviewId(),
+                "/tai-khoan/" + reviewee.getUserId() + "?tab=reviews");
 
         return mapToResponse(review);
     }

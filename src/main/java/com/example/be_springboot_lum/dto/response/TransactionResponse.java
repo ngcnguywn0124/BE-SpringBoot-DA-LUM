@@ -50,6 +50,9 @@ public class TransactionResponse {
     private Boolean buyerConfirmedPayment;
     private Boolean sellerConfirmedPayment;
 
+    // ─── Đánh giá ─────────────────────────────────────────────────────────
+    private Boolean isReviewed;
+
     // ─── Huỷ / tranh chấp ─────────────────────────────────────────────────
     private String cancellationReason;
     private UUID cancelledBy;

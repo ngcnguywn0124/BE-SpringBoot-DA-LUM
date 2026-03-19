@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
     
     boolean existsByTransactionTransactionIdAndReviewerUserId(UUID transactionId, UUID reviewerId);
+    boolean existsByTransaction_TransactionId(UUID transactionId);
 
     Page<Review> findByRevieweeUserIdOrderByCreatedAtDesc(UUID revieweeId, Pageable pageable);
 

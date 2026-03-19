@@ -19,4 +19,18 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
            "WHERE cp.user.userId = :userId AND m.sender.userId <> :userId " +
            "AND (cp.lastReadAt IS NULL OR m.createdAt > cp.lastReadAt)")
     long countUnreadMessagesForUser(@Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(m) FROM Message m " +
+           "WHERE m.conversation.conversationId = :conversationId " +
+           "AND m.sender.userId <> :userId " +
+           "AND m.createdAt > :lastReadAt")
+    int countUnreadMessagesAfter(@Param("conversationId") UUID conversationId,
+                                 @Param("userId") UUID userId,
+                                 @Param("lastReadAt") java.time.OffsetDateTime lastReadAt);
+
+    @Query("SELECT COUNT(m) FROM Message m " +
+           "WHERE m.conversation.conversationId = :conversationId " +
+           "AND m.sender.userId <> :userId")
+    int countAllUnreadMessages(@Param("conversationId") UUID conversationId,
+                               @Param("userId") UUID userId);
 }

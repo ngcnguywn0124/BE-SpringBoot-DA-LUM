@@ -343,6 +343,22 @@ public class ChatServiceImpl implements ChatService {
             response.setIsUnread(false);
         }
         
+        // Calculate exact unread count
+        int unreadCount = 0;
+        if (myParticipant.getLastReadAt() == null) {
+            unreadCount = messageRepository.countAllUnreadMessages(
+                    conversation.getConversationId(),
+                    myParticipant.getUser().getUserId()
+            );
+        } else {
+            unreadCount = messageRepository.countUnreadMessagesAfter(
+                    conversation.getConversationId(),
+                    myParticipant.getUser().getUserId(),
+                    myParticipant.getLastReadAt()
+            );
+        }
+        response.setUnreadCount(unreadCount);
+        
         return response;
     }
 

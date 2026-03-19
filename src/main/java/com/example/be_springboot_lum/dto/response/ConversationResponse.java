@@ -36,7 +36,8 @@ public class ConversationResponse {
     // Last Message overview
     private String lastMessagePreview;
     private OffsetDateTime lastMessageAt;
-    private Boolean isUnread;
+    private Boolean isUnread; // Keep for backward compatibility
+    private Integer unreadCount;
 
     // Self state
     private Boolean isPinned;
