@@ -20,4 +20,6 @@ public interface ChatService {
     MessageResponse sendMessage(UUID currentUserId, SendMessageRequest request);
     
     void markConversationAsRead(UUID currentUserId, UUID conversationId);
+    
+    long getUnreadCount(UUID currentUserId);
 }
