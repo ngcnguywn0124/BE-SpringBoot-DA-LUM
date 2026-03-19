@@ -102,6 +102,9 @@ public enum ErrorCode {
     TRANSACTION_PRODUCT_NOT_AVAILABLE(4013, "Sản phẩm không còn khả dụng để giao dịch", HttpStatus.CONFLICT),
     TRANSACTION_ALREADY_EXISTS(4014, "Bạn đã có giao dịch đang diễn ra cho sản phẩm này", HttpStatus.CONFLICT),
 
+    // Review errors
+    REVIEW_ALREADY_EXISTS(4030, "Bạn đã đánh giá giao dịch này rồi", HttpStatus.CONFLICT),
+
     // Notification errors
     NOTIFICATION_NOT_FOUND(4020, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
     NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN);
