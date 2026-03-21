@@ -60,15 +60,34 @@ public class AuthController {
 
     /**
      * POST /api/v1/auth/register
-     * Trả về thông tin user, đồng thời set httpOnly cookie chứa token.
+     * Trả về thông tin user, KHÔNG set cookie.
+     * Người dùng phải xác thực email trước khi đăng nhập.
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse>> register(
-            @Valid @RequestBody RegisterRequest request,
-            HttpServletResponse response) {
-        AuthResponse authResponse = authService.register(request);
-        setAuthCookies(response, authResponse, false);
-        return ResponseEntity.status(201).body(ApiResponse.created(authResponse.getUser()));
+            @Valid @RequestBody RegisterRequest request) {
+        UserResponse user = authService.register(request);
+        return ResponseEntity.status(201).body(
+                ApiResponse.<UserResponse>builder()
+                        .code(201)
+                        .message("Đăng ký thành công. Vui lòng xác thực email để đăng nhập.")
+                        .data(user)
+                        .build()
+        );
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<UserResponse>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+        UserResponse user = authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Xác thực email thành công", user));
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse<Void>> resendOtp(
+            @Valid @RequestBody ResendOtpRequest request) {
+        authService.resendOtp(request);
+        return ResponseEntity.ok(ApiResponse.success("OTP mới đã được gửi đến email của bạn", null));
     }
 
     /**

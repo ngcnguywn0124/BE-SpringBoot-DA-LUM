@@ -9,11 +9,13 @@ import com.example.be_springboot_lum.model.PasswordResetToken;
 import com.example.be_springboot_lum.model.Role;
 import com.example.be_springboot_lum.model.User;
 import com.example.be_springboot_lum.model.UserSession;
+import com.example.be_springboot_lum.model.UserVerification;
 import com.example.be_springboot_lum.repository.PasswordResetTokenRepository;
 import com.example.be_springboot_lum.repository.RoleRepository;
 import com.example.be_springboot_lum.repository.UserRepository;
 import com.example.be_springboot_lum.repository.UserSessionRepository;
 import com.example.be_springboot_lum.repository.OAuthAccountRepository;
+import com.example.be_springboot_lum.repository.UserVerificationRepository;
 import com.example.be_springboot_lum.security.JwtTokenProvider;
 import com.example.be_springboot_lum.service.AuthService;
 import com.example.be_springboot_lum.service.EmailService;
@@ -27,18 +29,27 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
+    private static final String TYPE_EMAIL = "email";
+    private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    private static final int MAX_FAILED_OTP_ATTEMPTS = 5;
+    private static final int ACCOUNT_LOCK_MINUTES = 60;
+    private static final int OTP_RESEND_COOLDOWN_SECONDS = 60;
+    private static final int OTP_LOCK_MINUTES = 60;
+
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final UserSessionRepository userSessionRepository;
     private final RoleRepository roleRepository;
     private final OAuthAccountRepository oAuthAccountRepository;
+    private final UserVerificationRepository userVerificationRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -48,11 +59,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public UserResponse register(RegisterRequest request) {
         if (!request.isAcceptTerms()) {
             throw new AppException(ErrorCode.TERMS_NOT_ACCEPTED);
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
@@ -65,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
                         "Default role chưa được khởi tạo, vui lòng chạy DataInitializer"));
 
         User user = User.builder()
-                .email(request.getEmail())
+                .email(normalizedEmail)
                 .phoneNumber(request.getPhoneNumber())
                 .fullName(request.getFullName())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -74,28 +86,142 @@ public class AuthServiceImpl implements AuthService {
 
         user = userRepository.save(user);
 
-        // Gửi email chào mừng bất đồng bộ
+        issueEmailOtp(user);
+        return mapToUserResponse(user);
+    }
+
+    @Override
+    @Transactional(noRollbackFor = AppException.class)
+    public UserResponse verifyEmail(VerifyEmailRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        String normalizedOtp = request.getOtp().trim();
+
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản"));
+
+        if (Boolean.TRUE.equals(user.getIsEmailVerified())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Email đã được xác thực");
+        }
+
+        UserVerification verification = userVerificationRepository
+                .findTopByUserUserIdAndVerificationTypeAndIsVerifiedFalseOrderByCreatedAtDesc(
+                        user.getUserId(),
+                        TYPE_EMAIL
+                )
+                .orElseThrow(() -> new AppException(ErrorCode.VERIFICATION_CODE_INVALID));
+
+        if (verification.getLockedUntil() != null && verification.getLockedUntil().isAfter(OffsetDateTime.now())) {
+            throw new AppException(ErrorCode.OTP_LOCKED);
+        }
+
+        if (verification.getExpiresAt() == null || verification.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new AppException(ErrorCode.VERIFICATION_CODE_EXPIRED);
+        }
+
+        if (!normalizedOtp.equals(verification.getVerificationCode())) {
+            int failedAttempts = (verification.getFailedAttempts() == null ? 0 : verification.getFailedAttempts()) + 1;
+            verification.setFailedAttempts(failedAttempts);
+            if (failedAttempts >= MAX_FAILED_OTP_ATTEMPTS) {
+                verification.setLockedUntil(OffsetDateTime.now().plusMinutes(OTP_LOCK_MINUTES));
+                userVerificationRepository.save(verification);
+                throw new AppException(ErrorCode.OTP_LOCKED);
+            }
+            userVerificationRepository.save(verification);
+            throw new AppException(ErrorCode.VERIFICATION_CODE_INVALID);
+        }
+
+        verification.setIsVerified(true);
+        verification.setVerifiedAt(OffsetDateTime.now());
+        verification.setFailedAttempts(0);
+        verification.setLockedUntil(null);
+        userVerificationRepository.save(verification);
+
+        user.setIsEmailVerified(true);
+        userRepository.save(user);
         emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
 
-        return buildAuthResponse(user, false);
+        return mapToUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void resendOtp(ResendOtpRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "Không tìm thấy tài khoản"));
+
+        if (Boolean.TRUE.equals(user.getIsEmailVerified())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Email đã được xác thực");
+        }
+
+        issueEmailOtp(user);
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = AppException.class)
     public AuthResponse login(LoginRequest request) {
+        String identifier = request.getIdentifier() == null ? "" : request.getIdentifier().trim();
         // Tìm theo email hoặc SĐT
         User user = userRepository
-                .findByEmailOrPhoneNumber(request.getIdentifier(), request.getIdentifier())
+                .findByEmailOrPhoneNumber(identifier, identifier)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            OffsetDateTime lockUntil = user.getLockedUntil();
+            if (lockUntil != null && lockUntil.isAfter(OffsetDateTime.now())) {
+                throw new AppException(
+                        ErrorCode.ACCOUNT_TEMPORARILY_LOCKED,
+                        "Tài khoản đang tạm khóa đến " + lockUntil + ". Vui lòng thử lại sau."
+                );
+            }
+            if (lockUntil != null && lockUntil.isBefore(OffsetDateTime.now())) {
+                user.setIsActive(true);
+                user.setLockedUntil(null);
+                user.setFailedLoginAttempts(0);
+                userRepository.save(user);
+            }
+        }
 
         if (!user.getIsActive()) {
             throw new AppException(ErrorCode.ACCOUNT_INACTIVE);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            int failedAttempts = (user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts()) + 1;
+            user.setFailedLoginAttempts(failedAttempts);
+            if (failedAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+                user.setIsActive(false);
+                OffsetDateTime lockedUntil = OffsetDateTime.now().plusMinutes(ACCOUNT_LOCK_MINUTES);
+                user.setLockedUntil(lockedUntil);
+                userRepository.save(user);
+                throw new AppException(
+                        ErrorCode.ACCOUNT_TEMPORARILY_LOCKED,
+                        "Tài khoản đã bị tạm khóa đến " + lockedUntil + " do nhập sai mật khẩu quá nhiều lần."
+                );
+            }
+            userRepository.save(user);
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+
+        Set<String> roleNames = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+        boolean isPrivileged = roleNames.contains(Role.ROLE_ADMIN) || roleNames.contains(Role.ROLE_SUPER_ADMIN);
+
+        if (!Boolean.TRUE.equals(user.getIsEmailVerified()) && !isPrivileged) {
+            try {
+                issueEmailOtp(user);
+            } catch (AppException ex) {
+                if (ex.getErrorCode() != ErrorCode.OTP_RESEND_TOO_SOON) {
+                    throw ex;
+                }
+            }
+            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         // Cập nhật thời gian đăng nhập
@@ -318,5 +444,36 @@ public class AuthServiceImpl implements AuthService {
                 .lastLoginAt(user.getLastLoginAt())
                 .lastSeenAt(user.getLastSeenAt())
                 .build();
+    }
+
+    private void issueEmailOtp(User user) {
+        UserVerification latestPending = userVerificationRepository
+                .findTopByUserUserIdAndVerificationTypeAndIsVerifiedFalseOrderByCreatedAtDesc(
+                        user.getUserId(),
+                        TYPE_EMAIL
+                )
+                .orElse(null);
+
+        if (latestPending != null) {
+            OffsetDateTime cooldownUntil = latestPending.getCreatedAt().plusSeconds(OTP_RESEND_COOLDOWN_SECONDS);
+            if (cooldownUntil.isAfter(OffsetDateTime.now())) {
+                throw new AppException(ErrorCode.OTP_RESEND_TOO_SOON);
+            }
+        }
+
+        String code = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1_000_000));
+
+        UserVerification verification = UserVerification.builder()
+                .user(user)
+                .verificationType(TYPE_EMAIL)
+                .verificationCode(code)
+                .isVerified(false)
+                .failedAttempts(0)
+                .lockedUntil(null)
+                .expiresAt(OffsetDateTime.now().plusMinutes(10))
+                .build();
+        userVerificationRepository.save(verification);
+
+        emailService.sendVerificationCodeEmail(user.getEmail(), user.getFullName(), code);
     }
 }

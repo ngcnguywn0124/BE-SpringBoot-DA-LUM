@@ -15,6 +15,10 @@ public enum ErrorCode {
     TOKEN_EXPIRED(1006, "Token đã hết hạn", HttpStatus.UNAUTHORIZED),
     PASSWORD_MISMATCH(1007, "Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST),
     CURRENT_PASSWORD_INCORRECT(1008, "Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_VERIFIED(1013, "Email chưa được xác thực. OTP mới đã được gửi đến email của bạn.", HttpStatus.FORBIDDEN),
+    ACCOUNT_TEMPORARILY_LOCKED(1014, "Tài khoản đang tạm khóa. Vui lòng thử lại sau.", HttpStatus.FORBIDDEN),
+    OTP_RESEND_TOO_SOON(1015, "Vui lòng chờ 60 giây trước khi yêu cầu mã mới.", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_LOCKED(1016, "Mã OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới sau 60 phút.", HttpStatus.FORBIDDEN),
 
     // OAuth errors
     OAUTH_GOOGLE_INVALID_TOKEN(1009, "Google token không hợp lệ", HttpStatus.UNAUTHORIZED),

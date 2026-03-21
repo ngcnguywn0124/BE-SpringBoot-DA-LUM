@@ -6,7 +6,11 @@ import com.example.be_springboot_lum.dto.response.UserResponse;
 
 public interface AuthService {
 
-    AuthResponse register(RegisterRequest request);
+    UserResponse register(RegisterRequest request);
+
+    UserResponse verifyEmail(VerifyEmailRequest request);
+
+    void resendOtp(ResendOtpRequest request);
 
     AuthResponse login(LoginRequest request);
 
