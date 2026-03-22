@@ -133,6 +133,13 @@ public class User {
     @Builder.Default
     private Boolean isActive = true;
 
+    @Column(name = "failed_login_attempts")
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private OffsetDateTime lockedUntil;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

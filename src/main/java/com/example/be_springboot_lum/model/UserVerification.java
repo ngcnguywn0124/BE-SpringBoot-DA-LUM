@@ -35,6 +35,13 @@ public class UserVerification {
     @Builder.Default
     private Boolean isVerified = false;
 
+    @Column(name = "failed_attempts")
+    @Builder.Default
+    private Integer failedAttempts = 0;
+
+    @Column(name = "locked_until")
+    private OffsetDateTime lockedUntil;
+
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;
 
