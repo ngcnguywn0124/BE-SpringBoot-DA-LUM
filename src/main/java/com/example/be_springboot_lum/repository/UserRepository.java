@@ -20,8 +20,22 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByPhoneNumber(String phoneNumber);
 
+    java.util.List<User> findAllByEmailIn(java.util.List<String> emails);
+
     /**
      * Tìm user theo email HOẶC số điện thoại (dùng cho login)
      */
     Optional<User> findByEmailOrPhoneNumber(String email, String phoneNumber);
+
+    /**
+     * Tìm kiếm users theo Role ID
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.id = :roleId " +
+            "AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
+    org.springframework.data.domain.Page<User> findUsersByRoleIdAndSearch(
+            @org.springframework.data.repository.query.Param("roleId") UUID roleId,
+            @org.springframework.data.repository.query.Param("search") String search,
+            org.springframework.data.domain.Pageable pageable);
 }
