@@ -111,7 +111,11 @@ public enum ErrorCode {
 
     // Notification errors
     NOTIFICATION_NOT_FOUND(4020, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
-    NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN);
+    NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN),
+
+    // Blog errors
+    BLOG_NOT_FOUND(5001, "Không tìm thấy bài viết", HttpStatus.NOT_FOUND),
+    BLOG_FORBIDDEN(5002, "Bạn không có quyền thao tác trên bài viết này", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;
