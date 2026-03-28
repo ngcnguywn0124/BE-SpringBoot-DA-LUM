@@ -74,4 +74,7 @@ public interface ProductService {
 
     /** Admin bật / tắt nổi bật */
     ProductResponse toggleFeatured(UUID productId);
+
+    /** Admin khôi phục tin xóa mềm */
+    ProductResponse restoreProduct(UUID productId);
 }

@@ -380,4 +380,18 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Đã cập nhật trạng thái nổi bật", productService.toggleFeatured(id)));
     }
+
+    /**
+     * Admin khôi phục tin xóa mềm.
+     *
+     * <pre>
+     * PATCH /api/v1/products/{id}/restore
+     * </pre>
+     */
+    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> restoreProduct(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Đã khôi phục tin đăng", productService.restoreProduct(id)));
+    }
 }
