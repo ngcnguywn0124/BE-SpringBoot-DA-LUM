@@ -14,6 +14,8 @@ public interface BlogService {
 
     BlogResponse createBlog(CreateBlogRequest request, User author) throws IOException;
 
+    com.example.be_springboot_lum.dto.response.CloudinaryResponse uploadImage(org.springframework.web.multipart.MultipartFile file) throws IOException;
+
     BlogResponse getBlogBySlug(String slug);
 
     Page<BlogResponse> getApprovedBlogs(String category, String query, Boolean isFeatured, Pageable pageable);

@@ -35,6 +35,11 @@ public class BlogServiceImpl implements BlogService {
     private final NotificationService notificationService;
 
     @Override
+    public CloudinaryResponse uploadImage(org.springframework.web.multipart.MultipartFile file) {
+        return cloudinaryService.upload(file, "blogs");
+    }
+
+    @Override
     @Transactional
     public BlogResponse createBlog(CreateBlogRequest request, User author) {
         String slug = SlugUtils.toSlug(request.getTitle());
@@ -51,7 +56,9 @@ public class BlogServiceImpl implements BlogService {
                 .excerpt(request.getExcerpt())
                 .content(request.getContent())
                 .category(request.getCategory())
-                .status("pending")
+                .status("approved")
+                .approvedAt(OffsetDateTime.now())
+                .approvedBy(author)
                 .viewCount(0)
                 .likeCount(0)
                 .isFeatured(false)
@@ -65,21 +72,9 @@ public class BlogServiceImpl implements BlogService {
 
         blog = blogRepository.save(blog);
 
-        // Notify Admins about new pending blog
+        // Notify about new approved blog
         try {
-            messagingTemplate.convertAndSend("/topic/admin/notifications", "NEW_BLOG_CREATED");
-            
-            // Notify user that their blog is pending
-            notificationService.sendNotification(
-                author.getUserId(),
-                "blog_created",
-                "Bài viết đã được gửi",
-                "Bài viết \"" + blog.getTitle() + "\" của bạn đã được gửi và đang chờ quản trị viên phê duyệt.",
-                null,
-                "blog",
-                blog.getBlogId(),
-                "/blog/" + blog.getSlug()
-            );
+            messagingTemplate.convertAndSend("/topic/blogs", "BLOG_APPROVED");
         } catch (Exception e) {
             log.error("Failed to send notifications: {}", e.getMessage());
         }

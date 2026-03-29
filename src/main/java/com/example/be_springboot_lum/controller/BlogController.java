@@ -73,7 +73,7 @@ public class BlogController {
      * Đăng bài viết mới.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_MODERATOR')")
     public ResponseEntity<ApiResponse<BlogResponse>> createBlog(
             @Valid @ModelAttribute CreateBlogRequest request) throws IOException {
 
@@ -91,6 +91,17 @@ public class BlogController {
         User actor = securityUtils.getCurrentUser();
         blogService.deleteBlog(id, actor);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa bài viết thành công", null));
+    }
+
+    /**
+     * Tải ảnh lên cho bài viết (chỉ dành cho editor của Admin).
+     */
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN', 'ROLE_MODERATOR')")
+    public ResponseEntity<ApiResponse<String>> uploadImage(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws IOException {
+        com.example.be_springboot_lum.dto.response.CloudinaryResponse uploadResult = blogService.uploadImage(file);
+        return ResponseEntity.ok(ApiResponse.success("Upload ảnh bài viết thành công", uploadResult.getUrl()));
     }
 
     // ═════════════════════════════════════════════════════════════════════════
