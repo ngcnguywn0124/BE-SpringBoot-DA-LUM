@@ -398,8 +398,43 @@ public class ProductServiceImpl implements ProductService {
             throw new AppException(ErrorCode.PRODUCT_ALREADY_DELETED);
         }
 
+        product.setPreviousStatus(product.getStatus());
         product.setStatus("deleted");
         productRepository.save(product);
+
+        publishProductStatusEvent(
+                product.getProductId(),
+                product.getSeller().getUserId(),
+                product.getStatus(),
+                "Tin đăng của bạn đã bị xóa.",
+                product.getPreviousStatus()
+        );
+    }
+
+    @Override
+    @Transactional
+    public ProductResponse restoreProduct(UUID productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (!"deleted".equals(product.getStatus())) {
+            throw new AppException(ErrorCode.PRODUCT_STATUS_INVALID_TRANSITION);
+        }
+
+        String newStatus = product.getPreviousStatus() != null ? product.getPreviousStatus() : "pending";
+        product.setStatus(newStatus);
+        product.setPreviousStatus("deleted");
+        productRepository.save(product);
+
+        publishProductStatusEvent(
+                product.getProductId(),
+                product.getSeller().getUserId(),
+                product.getStatus(),
+                "Tin đăng của bạn đã được khôi phục.",
+                "deleted"
+        );
+
+        return toFullResponse(product);
     }
 
     @Override
@@ -561,13 +596,21 @@ public class ProductServiceImpl implements ProductService {
      * - Gửi công khai cho trang chi tiết:  /topic/products/{productId}
      */
     private void publishProductStatusEvent(UUID productId, UUID ownerId, String newStatus, String message) {
+        publishProductStatusEvent(productId, ownerId, newStatus, message, null);
+    }
+
+    private void publishProductStatusEvent(UUID productId, UUID ownerId, String newStatus, String message, String previousStatus) {
         String json = String.format(
-                "{\"type\":\"PRODUCT_STATUS_CHANGED\",\"productId\":\"%s\",\"newStatus\":\"%s\",\"message\":\"%s\"}",
-                productId, newStatus, message
+                "{\"type\":\"PRODUCT_STATUS_CHANGED\",\"productId\":\"%s\",\"newStatus\":\"%s\",\"message\":\"%s\",\"previousStatus\":%s}",
+                productId,
+                newStatus,
+                message,
+                previousStatus != null ? "\"" + previousStatus + "\"" : "null"
         );
         try {
             messagingTemplate.convertAndSend("/topic/user-" + ownerId, json);
             messagingTemplate.convertAndSend("/topic/products/" + productId, json);
+            messagingTemplate.convertAndSend("/topic/admin/products", json);
         } catch (Exception e) {
             log.warn("Không thể gửi WebSocket event cho sản phẩm {}: {}", productId, e.getMessage());
         }
