@@ -1,7 +1,8 @@
 package com.example.be_springboot_lum.exception;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
+
+import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -108,7 +109,7 @@ public enum ErrorCode {
 
     // Review errors
     REVIEW_ALREADY_EXISTS(4030, "Bạn đã đánh giá giao dịch này rồi", HttpStatus.CONFLICT),
-
+    PRODUCT_COMMENT_NOT_FOUND(4031, "Không tìm thấy bình luận", HttpStatus.NOT_FOUND),
     // Notification errors
     NOTIFICATION_NOT_FOUND(4020, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
     NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN);
