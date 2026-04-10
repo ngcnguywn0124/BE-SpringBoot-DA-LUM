@@ -16,6 +16,7 @@ public class UserResponse {
     private String email;
     private String phoneNumber;
     private String fullName;
+    private String avatar;
     private String avatarUrl;
     private String coverUrl;
     /** Tập hợp các role của user, ví dụ: ["ROLE_USER", "ROLE_ADMIN"] */

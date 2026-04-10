@@ -81,6 +81,8 @@ public class SecurityConfig {
                     "/api/v1/universities/**",
                     "/api/v1/campuses/**",
                     "/api/v1/product-attributes/**",
+                    "/api/v1/blogs/**",
+                    "/api/v1/blog-categories/**",
                     "/api/v1/tags/**"
                 ).permitAll()
 
