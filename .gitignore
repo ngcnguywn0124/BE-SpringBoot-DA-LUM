@@ -31,5 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
-db.txt
+
 /src/main/resources/application.properties
