@@ -3,6 +3,7 @@ package com.example.be_springboot_lum.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -37,4 +38,8 @@ public class ProductCommentLike {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
+
+        @UpdateTimestamp
+        @Column(name = "updated_at")
+        private OffsetDateTime updatedAt;
 }

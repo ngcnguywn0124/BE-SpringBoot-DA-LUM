@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -30,7 +33,7 @@ public class PresenceServiceImpl implements PresenceService {
 
     @Override
     @Transactional
-    public void onUserConnected(UUID userId) {
+    public PresenceEvent onUserConnected(UUID userId) {
         PresenceEvent event = PresenceEvent.builder()
                 .userId(userId)
                 .online(true)
@@ -39,11 +42,12 @@ public class PresenceServiceImpl implements PresenceService {
 
         presence.put(userId, event);
         publish(event);
+        return event;
     }
 
     @Override
     @Transactional
-    public void onUserDisconnected(UUID userId, OffsetDateTime when) {
+    public PresenceEvent onUserDisconnected(UUID userId, OffsetDateTime when) {
         OffsetDateTime ts = when != null ? when : OffsetDateTime.now();
 
         // Persist lastSeenAt
@@ -60,6 +64,33 @@ public class PresenceServiceImpl implements PresenceService {
 
         presence.put(userId, event);
         publish(event);
+        return event;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PresenceEvent> getPresences(List<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> users = userRepository.findAllById(userIds);
+        
+        return userIds.stream().map(userId -> {
+            PresenceEvent inMemory = presence.get(userId);
+            if (inMemory != null) {
+                return inMemory;
+            }
+            
+            User user = users.stream().filter(u -> u.getUserId().equals(userId)).findFirst().orElse(null);
+            OffsetDateTime lastSeenAt = (user != null) ? user.getLastSeenAt() : null;
+            
+            return PresenceEvent.builder()
+                    .userId(userId)
+                    .online(false)
+                    .lastSeenAt(lastSeenAt)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Override

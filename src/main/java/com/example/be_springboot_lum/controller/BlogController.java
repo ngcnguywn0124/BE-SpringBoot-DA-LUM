@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -61,6 +62,20 @@ public class BlogController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Lấy chi tiết bài viết thành công",
                 blogService.getBlogById(id, false)));
+    }
+
+    @PostMapping(value = "/upload-image", consumes = { "multipart/form-data" })
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> uploadBlogImage(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.<String>builder()
+                    .code(400)
+                    .message("Vui lòng chọn file ảnh")
+                    .build());
+        }
+        return ResponseEntity.ok(ApiResponse.success(
+                "Tải ảnh lên thành công",
+                blogService.uploadBlogImage(file)));
     }
 
     @PostMapping(consumes = { "multipart/form-data" })

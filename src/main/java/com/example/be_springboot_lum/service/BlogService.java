@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -179,6 +180,11 @@ public class BlogService {
             throw new AppException(ErrorCode.BLOG_NOT_FOUND);
         }
         blogRepository.deleteById(id);
+    }
+
+    public String uploadBlogImage(MultipartFile file) {
+        CloudinaryResponse uploadResult = cloudinaryService.upload(file, "lum/blogs/content");
+        return uploadResult.getUrl();
     }
 
     private BlogResponse mapToResponse(Blog blog) {
