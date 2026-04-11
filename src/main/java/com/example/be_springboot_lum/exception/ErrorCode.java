@@ -112,7 +112,12 @@ public enum ErrorCode {
     PRODUCT_COMMENT_NOT_FOUND(4031, "Không tìm thấy bình luận", HttpStatus.NOT_FOUND),
     // Notification errors
     NOTIFICATION_NOT_FOUND(4020, "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
-    NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN);
+    NOTIFICATION_FORBIDDEN(4021, "Bạn không có quyền thao tác thông báo này", HttpStatus.FORBIDDEN),
+
+    // Blog errors
+    BLOG_NOT_FOUND(6001, "Không tìm thấy bài viết", HttpStatus.NOT_FOUND),
+    BLOG_CATEGORY_NOT_FOUND(6002, "Không tìm thấy danh mục blog", HttpStatus.NOT_FOUND),
+    BLOG_CATEGORY_ALREADY_EXISTS(6003, "Tên danh mục blog đã tồn tại", HttpStatus.CONFLICT);
 
     private final int code;
     private final String message;
