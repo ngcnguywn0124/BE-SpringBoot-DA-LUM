@@ -298,7 +298,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/")
                 .maxAge(accessTokenAge)
-                .sameSite("Lax") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
+                .sameSite("None") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
                 .build();
 
         // Refresh token chỉ được gửi đến /api/v1/auth (tăng bảo mật)
@@ -307,7 +307,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/api/v1/auth")
                 .maxAge(refreshTokenAge)
-                .sameSite("Lax") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
+                .sameSite("None") // Khi dùng ngrok (cross-origin), SameSite phải là None thay vì Lax hoặc Strict
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -317,9 +317,9 @@ public class AuthController {
     /** Xóa cả hai cookie (maxAge=0). */
     private void clearAuthCookies(HttpServletResponse response) {
         ResponseCookie clearAccess = ResponseCookie.from("accessToken", "")
-                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite("Lax").build();
+                .httpOnly(true).secure(cookieSecure).path("/").maxAge(0).sameSite("None").build();
         ResponseCookie clearRefresh = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true).secure(cookieSecure).path("/api/v1/auth").maxAge(0).sameSite("Lax").build();
+                .httpOnly(true).secure(cookieSecure).path("/api/v1/auth").maxAge(0).sameSite("None").build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
