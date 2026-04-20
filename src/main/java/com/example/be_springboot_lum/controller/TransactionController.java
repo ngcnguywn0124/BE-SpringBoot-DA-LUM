@@ -45,8 +45,18 @@ public class TransactionController {
     @GetMapping
     public ResponseEntity<Page<TransactionResponse>> getMyTransactions(
             @RequestHeader("User-Id") UUID currentUserId,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
             Pageable pageable) {
-        return ResponseEntity.ok(transactionService.getMyTransactions(currentUserId, pageable));
+        return ResponseEntity.ok(transactionService.getMyTransactions(
+                currentUserId,
+                pageable,
+                role,
+                status,
+                fromDate,
+                toDate));
     }
 
     /**

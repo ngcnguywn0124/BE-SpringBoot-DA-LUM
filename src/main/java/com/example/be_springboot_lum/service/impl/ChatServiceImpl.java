@@ -10,6 +10,7 @@ import com.example.be_springboot_lum.model.Conversation;
 import com.example.be_springboot_lum.model.ConversationParticipant;
 import com.example.be_springboot_lum.model.Message;
 import com.example.be_springboot_lum.model.Product;
+import com.example.be_springboot_lum.model.ProductImage;
 import com.example.be_springboot_lum.model.User;
 import com.example.be_springboot_lum.repository.ConversationParticipantRepository;
 import com.example.be_springboot_lum.repository.ConversationRepository;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -319,9 +321,10 @@ public class ChatServiceImpl implements ChatService {
             response.setProductTitle(product.getTitle());
             response.setProductSlug(product.getSlug());
             response.setProductPrice(product.getPrice());
+            response.setMeetingPoint(product.getMeetingPoint());
             response.setSellerId(product.getSeller().getUserId());
             response.setSellerPhone(product.getSeller().getPhoneNumber());
-            // response.setProductImageUrl(product.getImageUrl());
+            response.setProductImageUrl(resolveProductImageUrl(product));
         }
 
         if (conversation.getTransactionId() != null) {
@@ -360,6 +363,21 @@ public class ChatServiceImpl implements ChatService {
         response.setUnreadCount(unreadCount);
         
         return response;
+    }
+
+    private String resolveProductImageUrl(Product product) {
+        if (product == null || product.getImages() == null || product.getImages().isEmpty()) {
+            return null;
+        }
+
+        return product.getImages().stream()
+                .sorted(Comparator
+                        .comparing(ProductImage::getIsPrimary, Comparator.nullsLast(Boolean::compareTo)).reversed()
+                        .thenComparing(ProductImage::getDisplayOrder, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(ProductImage::getCreatedAt, Comparator.nullsLast(OffsetDateTime::compareTo)))
+                .map(ProductImage::getImageUrl)
+                .findFirst()
+                .orElse(null);
     }
 
     private MessageResponse mapToMessageResponse(Message message, OffsetDateTime otherLastReadAt) {

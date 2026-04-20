@@ -1,0 +1,10 @@
+.git
+.gitignore
+.idea
+target
+node_modules
+README.md
+HELP.md
+db.txt
+package-lock.json
+.gitattributes

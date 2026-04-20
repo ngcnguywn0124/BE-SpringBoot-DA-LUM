@@ -28,6 +28,7 @@ public class ConversationResponse {
     private String productImageUrl;
     private String productSlug;
     private java.math.BigDecimal productPrice;
+    private String meetingPoint;
     
     // Seller of the product
     private UUID sellerId;
