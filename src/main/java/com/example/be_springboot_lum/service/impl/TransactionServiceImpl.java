@@ -9,6 +9,7 @@ import com.example.be_springboot_lum.exception.ErrorCode;
 import com.example.be_springboot_lum.model.Conversation;
 import com.example.be_springboot_lum.model.Message;
 import com.example.be_springboot_lum.model.Product;
+import com.example.be_springboot_lum.model.ProductImage;
 import com.example.be_springboot_lum.model.Transaction;
 import com.example.be_springboot_lum.model.TransactionStatusHistory;
 import com.example.be_springboot_lum.model.User;
@@ -30,7 +31,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -51,6 +54,18 @@ public class TransactionServiceImpl implements TransactionService {
     private final ReviewRepository reviewRepository;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private static final Set<String> VALID_STATUSES = Set.of(
+            "buyer_requested",
+            "seller_confirmed",
+            "meetup_confirmed",
+            "payment_pending",
+            "completed",
+            "cancelled",
+            "disputed");
+    private static final Set<String> VALID_ROLES = Set.of("all", "buyer", "seller");
+    private static final Set<String> VALID_TRANSACTION_TYPES = Set.of("sale", "exchange");
+    private static final Set<String> VALID_PAYMENT_METHODS = Set.of("cash", "transfer");
+    private static final Set<String> VALID_SHIPPING_METHODS = Set.of("meetup", "delivery", "both");
 
     // ─── Trạng thái cho phép chuyển ──────────────────────────────────────────
     // Mapping: trạng thái hiện tại → tập trạng thái được phép chuyển sang
@@ -72,6 +87,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse createTransaction(UUID buyerId, CreateTransactionRequest request) {
+        validateCreateRequest(request);
+
         User buyer = userRepository.findById(buyerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
@@ -139,7 +156,7 @@ public class TransactionServiceImpl implements TransactionService {
                 transaction.getTransactionId(),
                 "/tai-khoan/lich-su-giao-dich");
 
-        return mapToResponse(transaction, fetchStatusHistory(transaction.getTransactionId()));
+        return mapToResponse(transaction, fetchStatusHistory(transaction.getTransactionId()), buyerId);
     }
 
     // ─── updateTransactionStatus ──────────────────────────────────────────────
@@ -148,6 +165,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     public TransactionResponse updateTransactionStatus(UUID userId, UUID transactionId,
             UpdateTransactionStatusRequest request) {
+        validateUpdateRequest(request);
+
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
 
@@ -209,7 +228,7 @@ public class TransactionServiceImpl implements TransactionService {
                             (isBuyer ? "Người mua" : "Người bán") + " đã xác nhận lịch gặp");
                     // Fix realtime: Gửi webSocket update ngay cả khi status chưa đổi để bên kia thấy flag thay đổi
                     sendTransactionEventMessage(transaction, currentStatus);
-                    return mapToResponse(transaction, fetchStatusHistory(transactionId));
+                    return mapToResponse(transaction, fetchStatusHistory(transactionId), userId);
                 }
                 transaction.setMeetupConfirmedAt(OffsetDateTime.now());
             }
@@ -231,7 +250,7 @@ public class TransactionServiceImpl implements TransactionService {
                             (isBuyer ? "Người mua" : "Người bán") + " đã xác nhận thanh toán");
                     // Fix realtime: Gửi webSocket update ngay lập tức để người còn lại thấy tick xanh (đã xác nhận)
                     sendTransactionEventMessage(transaction, currentStatus);
-                    return mapToResponse(transaction, fetchStatusHistory(transactionId));
+                    return mapToResponse(transaction, fetchStatusHistory(transactionId), userId);
                 }
                 transaction.setCompletedAt(OffsetDateTime.now());
                 completeTransaction(transaction);
@@ -275,16 +294,37 @@ public class TransactionServiceImpl implements TransactionService {
                 transaction.getTransactionId(),
                 "/tai-khoan/lich-su-giao-dich");
 
-        return mapToResponse(transaction, fetchStatusHistory(transactionId));
+        return mapToResponse(transaction, fetchStatusHistory(transactionId), userId);
     }
 
     // ─── getMyTransactions ────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> getMyTransactions(UUID userId, Pageable pageable) {
-        return transactionRepository.findByUserId(userId, pageable)
-                .map(t -> mapToResponse(t, null)); // không load history cho list view
+    public Page<TransactionResponse> getMyTransactions(
+            UUID userId,
+            Pageable pageable,
+            String role,
+            String status,
+            String fromDate,
+            String toDate) {
+        String normalizedRole = normalizeRole(role);
+        String normalizedStatus = normalizeStatus(status);
+        OffsetDateTime parsedFromDate = parseDateBoundary(fromDate, true);
+        OffsetDateTime parsedToDate = parseDateBoundary(toDate, false);
+
+        if (parsedFromDate != null && parsedToDate != null && parsedFromDate.isAfter(parsedToDate)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "fromDate phải nhỏ hơn hoặc bằng toDate");
+        }
+
+        return transactionRepository.findByUserIdWithFilters(
+                        userId,
+                        normalizedRole,
+                        normalizedStatus,
+                        parsedFromDate,
+                        parsedToDate,
+                        pageable)
+                .map(t -> mapToResponse(t, null, userId));
     }
 
     // ─── getTransactionDetail ─────────────────────────────────────────────────
@@ -301,7 +341,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new AppException(ErrorCode.TRANSACTION_FORBIDDEN);
         }
 
-        return mapToResponse(transaction, fetchStatusHistory(transactionId));
+        return mapToResponse(transaction, fetchStatusHistory(transactionId), userId);
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
@@ -429,17 +469,17 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     /** Map Transaction entity → DTO */
-    private TransactionResponse mapToResponse(Transaction t, List<TransactionStatusHistoryResponse> history) {
+    private TransactionResponse mapToResponse(
+            Transaction t,
+            List<TransactionStatusHistoryResponse> history,
+            UUID reviewerId) {
         Product product = t.getProduct();
         User buyer = t.getBuyer();
         User seller = t.getSeller();
 
-        // Lấy ảnh đầu tiên của sản phẩm
-        String productImageUrl = (product.getImages() != null && !product.getImages().isEmpty())
-                ? product.getImages().get(0).getImageUrl()
-                : null;
-
-        boolean isReviewed = reviewRepository.existsByTransaction_TransactionId(t.getTransactionId());
+        String productImageUrl = resolveProductImageUrl(product);
+        boolean isReviewed = reviewerId != null
+                && reviewRepository.existsByTransactionTransactionIdAndReviewerUserId(t.getTransactionId(), reviewerId);
 
         return TransactionResponse.builder()
                 .transactionId(t.getTransactionId())
@@ -487,6 +527,82 @@ public class TransactionServiceImpl implements TransactionService {
                 // History
                 .statusHistory(history)
                 .build();
+    }
+
+    private void validateCreateRequest(CreateTransactionRequest request) {
+        if (request == null || request.getProductId() == null) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "productId là bắt buộc");
+        }
+        if (request.getTransactionType() != null && !VALID_TRANSACTION_TYPES.contains(request.getTransactionType())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "transactionType không hợp lệ");
+        }
+        if (request.getPaymentMethod() != null && !VALID_PAYMENT_METHODS.contains(request.getPaymentMethod())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "paymentMethod không hợp lệ");
+        }
+        if (request.getShippingMethod() != null && !VALID_SHIPPING_METHODS.contains(request.getShippingMethod())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "shippingMethod không hợp lệ");
+        }
+    }
+
+    private void validateUpdateRequest(UpdateTransactionStatusRequest request) {
+        if (request == null || request.getStatus() == null || !VALID_STATUSES.contains(request.getStatus())) {
+            throw new AppException(ErrorCode.TRANSACTION_INVALID_STATUS);
+        }
+        if (request.getPaymentMethod() != null && !VALID_PAYMENT_METHODS.contains(request.getPaymentMethod())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "paymentMethod không hợp lệ");
+        }
+    }
+
+    private String normalizeRole(String role) {
+        String normalizedRole = role == null || role.isBlank() ? "all" : role.trim().toLowerCase();
+        if (!VALID_ROLES.contains(normalizedRole)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "role không hợp lệ");
+        }
+        return normalizedRole;
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank() || "all".equalsIgnoreCase(status)) {
+            return null;
+        }
+
+        String normalizedStatus = status.trim().toLowerCase();
+        if (!VALID_STATUSES.contains(normalizedStatus)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "status không hợp lệ");
+        }
+        return normalizedStatus;
+    }
+
+    private OffsetDateTime parseDateBoundary(String value, boolean startOfDay) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            LocalDate date = LocalDate.parse(value.trim());
+            return startOfDay
+                    ? date.atStartOfDay().atOffset(OffsetDateTime.now().getOffset())
+                    : date.plusDays(1).atStartOfDay().atOffset(OffsetDateTime.now().getOffset()).minusNanos(1);
+        } catch (Exception exception) {
+            throw new AppException(
+                    ErrorCode.VALIDATION_ERROR,
+                    (startOfDay ? "fromDate" : "toDate") + " không hợp lệ");
+        }
+    }
+
+    private String resolveProductImageUrl(Product product) {
+        if (product == null || product.getImages() == null || product.getImages().isEmpty()) {
+            return null;
+        }
+
+        return product.getImages().stream()
+                .sorted(Comparator
+                        .comparing(ProductImage::getIsPrimary, Comparator.nullsLast(Boolean::compareTo)).reversed()
+                        .thenComparing(ProductImage::getDisplayOrder, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(ProductImage::getCreatedAt, Comparator.nullsLast(OffsetDateTime::compareTo)))
+                .map(ProductImage::getImageUrl)
+                .findFirst()
+                .orElse(null);
     }
 
     // ─── Message / Notification content builders ──────────────────────────────

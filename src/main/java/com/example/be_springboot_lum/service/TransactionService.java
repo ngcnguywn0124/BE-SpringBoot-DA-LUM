@@ -17,7 +17,13 @@ public interface TransactionService {
     TransactionResponse updateTransactionStatus(UUID userId, UUID transactionId, UpdateTransactionStatusRequest request);
 
     /** Danh sách giao dịch của user (cả buyer & seller) */
-    Page<TransactionResponse> getMyTransactions(UUID userId, Pageable pageable);
+    Page<TransactionResponse> getMyTransactions(
+            UUID userId,
+            Pageable pageable,
+            String role,
+            String status,
+            String fromDate,
+            String toDate);
 
     /** Chi tiết giao dịch kèm lịch sử trạng thái */
     TransactionResponse getTransactionDetail(UUID userId, UUID transactionId);
